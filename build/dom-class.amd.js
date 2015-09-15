@@ -1,2 +1,2 @@
-/*! (C) WebReflection Mit Style License */
-define({});
+/*! (C) Andrea Giammarchi - @WebReflection - Mit Style License */
+define(function(){function e(){}return e});

@@ -1,12 +1,12 @@
 //remove:
-var main = require('../build/dom-class.node.js');
+var DOMClass = require('../build/dom-class.node.js');
 //:remove
 
 wru.test([
   {
     name: "main",
     test: function () {
-      wru.assert(typeof main == "object");
+      wru.assert(typeof DOMClass == "function");
       // wru.assert(0);
     }
   }
