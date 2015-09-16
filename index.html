@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Dom-class : Custom Elements through JS">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Dom-class</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/WebReflection/dom-class">View on GitHub</a>
+
+          <h1 id="project_title">Dom-class</h1>
+          <h2 id="project_tagline">Custom Elements through JS</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/WebReflection/dom-class/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/WebReflection/dom-class/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="dom-class-" class="anchor" href="#dom-class-" aria-hidden="true"><span class="octicon octicon-link"></span></a>dom-class <a href="http://travis-ci.org/WebReflection/dom-class"><img src="https://secure.travis-ci.org/WebReflection/dom-class.svg" alt="build status"></a>
+</h1>
+
+<p>Built on top of <a href="https://github.com/WebReflection/es-class#es-class-">es-class</a>, and integrating handy <a href="https://github.com/WebReflection/restyle#restyle">restyle</a> features, <code>DOMClass</code> is a lightweight, cross browser, simplification of <a href="http://www.w3.org/standards/techs/components#w3c_all">WebComponents</a>.</p>
+
+<h3>
+<a id="how-to" class="anchor" href="#how-to" aria-hidden="true"><span class="octicon octicon-link"></span></a>How To</h3>
+
+<p>All <a href="https://github.com/WebReflection/es-class#features-example">es-class features</a> are included, and the <code>constructor</code> will be automatically used once  the component has been initialized.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> MyComponent <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DOMClass</span>({
+  <span class="pl-en">constructor</span><span class="pl-k">:</span> <span class="pl-k">function</span> () {
+    <span class="pl-v">this</span>.textContent <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>Hello World!<span class="pl-pds">'</span></span>;
+  }
+});
+
+<span class="pl-c1">document</span>.<span class="pl-c1">body</span>.append(<span class="pl-k">new</span> <span class="pl-en">MyComponent</span>);</pre></div>
+
+<p>While by default new components will be created name-conflict free, it is possible to specify the desired node name via the <code>name</code> property.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> XAMe <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DOMClass</span>({
+  name<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>x-a-me<span class="pl-pds">'</span></span>,
+  <span class="pl-en">constructor</span><span class="pl-k">:</span> <span class="pl-k">function</span> () {
+    <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-v">this</span>.textContent);
+  }
+});
+
+<span class="pl-c">// we can create via new DOMClass</span>
+<span class="pl-c">// or we can use the name</span>
+<span class="pl-c1">document</span>.<span class="pl-c1">body</span>.innerHTML <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;x-a-me&gt;Hello Again!&lt;/x-a-me&gt;<span class="pl-pds">'</span></span>;</pre></div>
+
+<p>All <a href="http://www.w3.org/TR/custom-elements/#types-of-callbacks">famous and verbose CustomElement callbacks</a> are aliased in a simpler, yet semantic, way.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> MyCE <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DOMClass</span>({
+
+  <span class="pl-c">// equivalent of createdCallback</span>
+  <span class="pl-c">// will be invoked after the component will get initialized</span>
+  <span class="pl-c">// in case there are mixins or super extends</span>
+  <span class="pl-en">constructor</span><span class="pl-k">:</span> <span class="pl-k">function</span> () {},
+
+  <span class="pl-c">// equivalent of attachedCallback</span>
+  <span class="pl-en">onAttached</span><span class="pl-k">:</span> <span class="pl-k">function</span> () {},
+
+  <span class="pl-c">// equivalent of detachedCallback</span>
+  <span class="pl-en">onDetached</span><span class="pl-k">:</span> <span class="pl-k">function</span> () {},
+
+  <span class="pl-c">// equivalent of attributeChangedCallback</span>
+  <span class="pl-en">onChanged</span><span class="pl-k">:</span> <span class="pl-k">function</span> () {}
+
+});</pre></div>
+
+<p>It is possible to style elements per Component, which will eventually also create a <code>css</code> property we can use to apply own specific styles.</p>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> XSquare <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">DOMClass</span>({
+  name<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>x-square<span class="pl-pds">'</span></span>,
+  css<span class="pl-k">:</span> {
+    <span class="pl-c">// to self reference the component</span>
+    <span class="pl-c">// it is also possible to use just empty selector</span>
+    <span class="pl-c">// handy specially when the name is unknown</span>
+    <span class="pl-s"><span class="pl-pds">'</span>x-square<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+      display<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>block<span class="pl-pds">'</span></span>,
+      padding<span class="pl-k">:</span> <span class="pl-c1">0</span>,
+      width<span class="pl-k">:</span> <span class="pl-c1">32</span>,
+      height<span class="pl-k">:</span> <span class="pl-c1">32</span>,
+      border<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>1px solid black<span class="pl-pds">'</span></span>
+    },
+    <span class="pl-c">// to reference any element within the component</span>
+    <span class="pl-c">// simply use regular CSS selectors</span>
+    <span class="pl-s"><span class="pl-pds">'</span>span<span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+      display<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>inline-block<span class="pl-pds">'</span></span>,
+      width<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>100%<span class="pl-pds">'</span></span>,
+      lineHeight<span class="pl-k">:</span> <span class="pl-c1">32</span>,
+      textAlign<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>center<span class="pl-pds">'</span></span>,
+      font<span class="pl-k">:</span> {
+        size<span class="pl-k">:</span> <span class="pl-c1">26</span>,
+        weight<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>bold<span class="pl-pds">'</span></span>
+      }
+    }
+    <span class="pl-c">// mediq queries, animations, and everything else</span>
+    <span class="pl-c">// are also supported. Please see `restyle` documentation</span>
+  },
+  <span class="pl-c">// Yes! DOMClass accepts arguments too \o/</span>
+  <span class="pl-en">constructor</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">text</span>) {
+    <span class="pl-v">this</span>.innerHTML <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;span&gt;<span class="pl-pds">'</span></span> <span class="pl-k">+</span> text <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;/span&gt;<span class="pl-pds">'</span></span>;
+    <span class="pl-c">// if there is a css in the prototype,</span>
+    <span class="pl-c">// a fresh new restyle object will be assigned at runtime</span>
+    <span class="pl-v">this</span>.css.set({
+      <span class="pl-c">// empty selector, same as using 'x-square'</span>
+      <span class="pl-c">// to reference itself</span>
+      <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span><span class="pl-k">:</span> {
+        backgroundColor<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>rgb(<span class="pl-pds">'</span></span> <span class="pl-k">+</span> [
+          <span class="pl-c1">Math</span>.<span class="pl-c1">random</span>() <span class="pl-k">*</span> <span class="pl-c1">256</span> | <span class="pl-c1">0</span>,
+          <span class="pl-c1">Math</span>.<span class="pl-c1">random</span>() <span class="pl-k">*</span> <span class="pl-c1">256</span> | <span class="pl-c1">0</span>,
+          <span class="pl-c1">Math</span>.<span class="pl-c1">random</span>() <span class="pl-k">*</span> <span class="pl-c1">256</span> | <span class="pl-c1">0</span>
+        ].<span class="pl-c1">join</span>(<span class="pl-s"><span class="pl-pds">'</span>,<span class="pl-pds">'</span></span>) <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>)<span class="pl-pds">'</span></span>
+      }
+    });
+  }
+});
+
+<span class="pl-c">// example</span>
+<span class="pl-c1">document</span>.<span class="pl-c1">body</span>.append(<span class="pl-k">new</span> <span class="pl-en">XSquare</span>(<span class="pl-s"><span class="pl-pds">'</span>!<span class="pl-pds">'</span></span>));
+<span class="pl-c1">document</span>.<span class="pl-c1">body</span>.append(<span class="pl-k">new</span> <span class="pl-en">XSquare</span>(<span class="pl-s"><span class="pl-pds">'</span>A<span class="pl-pds">'</span></span>));
+<span class="pl-c1">document</span>.<span class="pl-c1">body</span>.append(<span class="pl-k">new</span> <span class="pl-en">XSquare</span>(<span class="pl-s"><span class="pl-pds">'</span>Z<span class="pl-pds">'</span></span>));</pre></div>
+
+<p>Please note there is no ShadowDOM, template, or HTMLImport polyfill, everything works with regular, well supported, HTML5 standards and on  top of <a href="https://github.com/WebReflection/document-register-element#document-register-element">document.registerElement</a>.</p>
+
+<h3>
+<a id="compatibility" class="anchor" href="#compatibility" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compatibility</h3>
+
+<p>The following list of <strong>desktop</strong> browsers has been successfully tested:</p>
+
+<ul>
+<li>Chrome</li>
+<li>Firefox</li>
+<li>IE9 or greater</li>
+<li>Safari</li>
+<li>Opera</li>
+</ul>
+
+<p>The following list of <strong>mobile</strong> OS has been successfully tested:</p>
+
+<ul>
+<li>iOS 5.1 or greater</li>
+<li>Android 2.2 or greater</li>
+<li>FirefoxOS 1.1 or greater</li>
+<li>KindleFire 3 or greater</li>
+<li>Windows Phone 7 or greater</li>
+<li>Opera Mobile 12 or greater</li>
+<li>Blackberry OS 7* and OS 10</li>
+<li>webOS 2 or LG TV</li>
+<li>Samsung Bada OS 2 or greater</li>
+<li>NOKIA Asha with Express Browser</li>
+</ul>
+
+<p>If you'd like to know if your browser is supported please check the <a href="http://webreflection.github.io/dom-class/test/">live test page</a> and let me know if something is not green, thank you.</p>
+
+<h3>
+<a id="which-file-for-what-" class="anchor" href="#which-file-for-what-" aria-hidden="true"><span class="octicon octicon-link"></span></a>Which file for what ?</h3>
+
+<p>The <a href="https://github.com/WebReflection/dom-class/blob/master/build/">build folder</a> contains all variants, following explained:</p>
+
+<ul>
+<li>
+<strong>vanilla</strong> <code>DOMClass</code> <a href="https://github.com/WebReflection/dom-class/blob/master/build/dom-class.js">minified</a> or <a href="https://github.com/WebReflection/dom-class/blob/master/build/dom-class.max.js">magnified</a>, both requires <a href="https://github.com/WebReflection/es-class">es-class</a> and, if used, <a href="https://github.com/WebReflection/restyle">restyle</a>
+</li>
+<li>
+<strong>browserify</strong> <a href="https://github.com/WebReflection/dom-class/blob/master/build/dom-class.node.js">CommonJS module</a>, which also depends on <a href="https://github.com/WebReflection/es-class">es-class</a> and <a href="https://github.com/WebReflection/restyle">restyle</a>
+</li>
+<li>
+<strong>AMD</strong> <a href="https://github.com/WebReflection/dom-class/blob/master/build/dom-class.amd.js">module</a>, which also depends on <a href="https://github.com/WebReflection/es-class">es-class</a> and <a href="https://github.com/WebReflection/restyle">restyle</a>
+</li>
+<li>
+<strong>Vitamer JS</strong> <a href="https://github.com/WebReflection/dom-class/blob/master/build/vitamer.js">all in one shot</a>, which also optionally comes with <a href="https://github.com/WebReflection/query-result">query-result</a> to simplify common DOM manipulation and operations. Such version is called <a href="https://github.com/WebReflection/dom-class/blob/master/build/vitamer-qr.js">vitamer-qr.js</a>
+</li>
+</ul>
+
+<h3>
+<a id="what-is-vitamer-js-" class="anchor" href="#what-is-vitamer-js-" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is Vitamer JS ?</h3>
+
+<p>Directly <a href="https://en.wikipedia.org/wiki/Vitamer">from Wikipedia</a>:</p>
+
+<blockquote>
+<p>Typically, the vitamin activity of multiple vitamers is due to the body's (limited) ability to convert one vitamer to another, or many vitamers to the same enzymatic cofactor(s), which is active in the body as the important form of the vitamin.</p>
+
+<p>As part of the definition of vitamin, the body cannot completely synthesize an optimal amount of vitamin activity from simple foodstuffs, without some minimal amount of a vitamer molecule as a basis.</p>
+</blockquote>
+
+<p>In this case it's the minimum amount of packages required in order to obtain a modern, comfortable, and cross browser environment based on latest DOM standards and proposals.</p>
+
+<p>In this case, the file contains the following module:</p>
+
+<ul>
+<li>IE9 only <a href="src/ie-lte-9.js">quick fix</a> for <a href="http://www.w3.org/TR/2011/WD-html5-20110525/timers.html#timers">standard timers</a>
+</li>
+<li>the <a href="https://github.com/WebReflection/dom4">dom4</a> normalizer</li>
+<li>the <a href="https://github.com/WebReflection/document-register-element">document-register-element</a> polyfill</li>
+<li>the powerful and handy <a href="https://github.com/WebReflection/restyle">restyle</a>
+</li>
+<li>the awesome <a href="https://github.com/WebReflection/es-class">es-class</a>, with lightweight traits capability and many other goodies</li>
+<li>optionally the quick and clean <a href="https://github.com/WebReflection/query-result">query-result</a> to simplify DOM operations</li>
+</ul>
+
+<p>From vanilla JS world, above package might be truly everything you need in order to create amazing apps, forgetting about cross platform issues or performance gotchas (greedy RAM or CPU operations).</p>
+
+<p>Since the total package amount, once minified and gzipped, is <em>less than 9KB</em>, I thought <em>Vitamer</em>, as opposite to the well known <em>Polymer</em>,  would have worked as file name. Let me know if you have better name ideas :-)</p>
+
+<h3>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h3>
+
+<p>The MIT Style License</p>
+
+<pre><code>Copyright (C) 2015 by Andrea Giammarchi - @WebReflection
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Dom-class maintained by <a href="https://github.com/WebReflection">WebReflection</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
