@@ -159,7 +159,7 @@ Directly [from Wikipedia](https://en.wikipedia.org/wiki/Vitamer):
 
 In this case it's the minimum amount of packages required in order to obtain a modern, comfortable, and cross browser environment based on latest DOM standards and proposals.
 
-In this case, the file contains the following module:
+The "_all in  one shot_" file contains the following modules:
 
   * IE9 only [quick fix](src/ie-lte-9.js) for [standard timers](http://www.w3.org/TR/2011/WD-html5-20110525/timers.html#timers)
   * the [dom4](https://github.com/WebReflection/dom4) normalizer
