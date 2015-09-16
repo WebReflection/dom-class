@@ -36,6 +36,17 @@ var DOMClass = (function (A, O) {'use strict';
     NAME = 'name',
     hOP = O.hasOwnProperty,
     empty = A.prototype,
+    grantArguments = function (el, args) {
+      if (!args.length) {
+        var attr = el.getAttribute('data-arguments');
+        if (attr) {
+          args = attr.charAt(0) === '[' ?
+            JSON.parse(attr) :
+            attr.split(/\s*,\s*/);
+        }
+      }
+      return args;
+    },
     setIfThere = function  (where, what, target, alias) {
       if (hOP.call(where, what)) {
         target[alias] = where[what];
@@ -103,6 +114,7 @@ var DOMClass = (function (A, O) {'use strict';
     key = hOP.call(description, NAME) ? description[NAME] : ('x-dom-class-' + i++);
     if (css) el[CSS] = restyle(key, description[CSS]);
     el[CONSTRUCTOR_CALLBACK] = function () {
+      args = grantArguments(this, args);
       constructor.apply(this, args);
       if (css) {
         this.classList.add(uid(key));

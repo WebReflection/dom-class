@@ -140,6 +140,31 @@ wru.test([
       document.body.appendChild(new XArgs(random));
     }
   }, {
+    name: 'arguments are passed via DOM through JSON',
+    test: function () {
+      var random = Math.random();
+      var XArgs = new DOMClass({
+        name: 'x-with-args',
+        constructor: wru.async(function () {
+          wru.assert(arguments[0] === random);
+        })
+      });
+      var div = document.body.appendChild(document.createElement('div'));
+      div.innerHTML = '<x-with-args data-arguments="[' + random + ']"></x-with-args>';
+    }
+  }, {
+    name: 'arguments are passed via DOM through split',
+    test: function () {
+      var XArgs = new DOMClass({
+        name: 'x-with-split-args',
+        constructor: wru.async(function () {
+          wru.assert(arguments[0] === 'a' && arguments[1] === '2');
+        })
+      });
+      var div = document.body.appendChild(document.createElement('div'));
+      div.innerHTML = '<x-with-split-args data-arguments="a,2"></x-with-split-args>';
+    }
+  }, {
     name: 'instanceof',
     test: function () {
       var XWCon = new DOMClass({
