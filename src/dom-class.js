@@ -1,4 +1,4 @@
-var DOMClass = (function (O) {'use strict';
+var DOMClass = (function (A, O) {'use strict';
   var
     ATTACHED = 'onAttached',
     ATTACHED_CALLBACK = 'attachedCallback',
@@ -12,10 +12,23 @@ var DOMClass = (function (O) {'use strict';
     EXTENDS = 'extends',
     NAME = 'name',
     hOP = O.hasOwnProperty,
+    empty = A.prototype,
     setIfThere = function  (where, what, target, alias) {
       if (hOP.call(where, what)) {
         target[alias] = where[what];
       }
+    },
+    // WUT? https://gist.github.com/WebReflection/4327762cb87a8c634a29
+    slice = function slice() {
+      for (var
+        o = +this,
+        i = o,
+        l = arguments.length,
+        n = l - o,
+        a = new A(n < 0 ? 0 : n);
+        i < l; i++
+      ) a[i - o] = arguments[i];
+      return a;
     },
     uid = function (name) {
       return name + '-i-' + (
@@ -27,10 +40,16 @@ var DOMClass = (function (O) {'use strict';
   ;
   return function DOMClass(description) {
     var
+      CustomElement = function CustomElement() {
+        args = slice.apply(0, arguments);
+        return new Element();
+      },
+      args = empty,
       el = {},
-      init = hOP.call(description, CONSTRUCTOR),
       css = hOP.call(description, CSS),
+      init = hOP.call(description, CONSTRUCTOR),
       createdCallback = init && description[CONSTRUCTOR],
+      Element,
       constructor,
       key
     ;
@@ -61,17 +80,19 @@ var DOMClass = (function (O) {'use strict';
     key = hOP.call(description, NAME) ? description[NAME] : ('x-dom-class-' + i++);
     if (css) el[CSS] = restyle(key, description[CSS]);
     el[CONSTRUCTOR_CALLBACK] = function () {
-      constructor.apply(this, arguments);
+      constructor.apply(this, args);
       if (css) {
         this.classList.add(uid(key));
         this.css = restyle(key + '.' + this.className.split(' ').pop(), {});
       }
-      if (init) createdCallback.apply(this, arguments);
+      if (init) createdCallback.apply(this, args);
     };
     constructor = new Class(el);
-    return document.registerElement(
+    Element = document.registerElement(
       key,
       {prototype: constructor.prototype}
     );
+    CustomElement.prototype = Element.prototype;
+    return CustomElement;
   };
-}(Object));
+}(Array, Object));

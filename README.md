@@ -85,8 +85,9 @@ var XSquare = new DOMClass({
     // mediq queries, animations, and everything else
     // are also supported. Please see `restyle` documentation
   },
-  constructor: function () {
-    this.innerHTML = '<span>!</span>';
+  // Yes! DOMClass accepts arguments too \o/
+  constructor: function (text) {
+    this.innerHTML = '<span>' + text + '</span>';
     // if there is a css in the prototype,
     // a fresh new restyle object will be assigned at runtime
     this.css.set({
@@ -104,9 +105,9 @@ var XSquare = new DOMClass({
 });
 
 // example
-document.body.append(new XSquare);
-document.body.append(new XSquare);
-document.body.append(new XSquare);
+document.body.append(new XSquare('!'));
+document.body.append(new XSquare('A'));
+document.body.append(new XSquare('Z'));
 ```
 
 Please note there is no ShadowDOM, template, or HTMLImport polyfill, everything works with regular, well supported, HTML5 standards and on  top of [document.registerElement](https://github.com/WebReflection/document-register-element#document-register-element).
@@ -146,7 +147,30 @@ The [build folder](https://github.com/WebReflection/dom-class/blob/master/build/
   * **vanilla** `DOMClass` [minified](https://github.com/WebReflection/dom-class/blob/master/build/dom-class.js) or [magnified](https://github.com/WebReflection/dom-class/blob/master/build/dom-class.max.js), both requires [es-class](https://github.com/WebReflection/es-class) and, if used, [restyle](https://github.com/WebReflection/restyle)
   * **browserify** [CommonJS module](https://github.com/WebReflection/dom-class/blob/master/build/dom-class.node.js), which also depends on [es-class](https://github.com/WebReflection/es-class) and [restyle](https://github.com/WebReflection/restyle)
   * **AMD** [module](https://github.com/WebReflection/dom-class/blob/master/build/dom-class.amd.js), which also depends on [es-class](https://github.com/WebReflection/es-class) and [restyle](https://github.com/WebReflection/restyle)
-  * **Vitamer** [all in one shot](https://github.com/WebReflection/dom-class/blob/master/build/vitamer.js), which also optionally comes with [query-result](https://github.com/WebReflection/query-result) to simplify common DOM manipulation and operations. Such version is called [vitamer-qr.js](https://github.com/WebReflection/dom-class/blob/master/build/vitamer-qr.js)
+  * **Vitamer JS** [all in one shot](https://github.com/WebReflection/dom-class/blob/master/build/vitamer.js), which also optionally comes with [query-result](https://github.com/WebReflection/query-result) to simplify common DOM manipulation and operations. Such version is called [vitamer-qr.js](https://github.com/WebReflection/dom-class/blob/master/build/vitamer-qr.js)
+
+
+### What is Vitamer JS ?
+Directly [from Wikipedia](https://en.wikipedia.org/wiki/Vitamer):
+
+> Typically, the vitamin activity of multiple vitamers is due to the body's (limited) ability to convert one vitamer to another, or many vitamers to the same enzymatic cofactor(s), which is active in the body as the important form of the vitamin.
+> 
+> As part of the definition of vitamin, the body cannot completely synthesize an optimal amount of vitamin activity from simple foodstuffs, without some minimal amount of a vitamer molecule as a basis.
+
+In this case it's the minimum amount of packages required in order to obtain a modern, comfortable, and cross browser environment based on latest DOM standards and proposals.
+
+In this case, the file contains the following module:
+
+  * IE9 only [quick fix](src/ie-lte-9.js) for [standard timers](http://www.w3.org/TR/2011/WD-html5-20110525/timers.html#timers)
+  * the [dom4](https://github.com/WebReflection/dom4) normalizer
+  * the [document-register-element](https://github.com/WebReflection/document-register-element) polyfill
+  * the powerful and handy [restyle](https://github.com/WebReflection/restyle)
+  * the awesome [es-class](https://github.com/WebReflection/es-class), with lightweight traits capability and many other goodies
+  * optionally the quick and clean [query-result](https://github.com/WebReflection/query-result) to simplify DOM operations
+
+From vanilla JS world, above package might be truly everything you need in order to create amazing apps, forgetting about cross platform issues or performance gotchas (greedy RAM or CPU operations).
+
+Since the total package amount, once minified and gzipped, is *less than 9KB*, I thought *Vitamer*, as opposite to the well known *Polymer*,  would have worked as file name. Let me know if you have better name ideas :-)
 
 
 

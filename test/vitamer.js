@@ -128,5 +128,26 @@ wru.test([
       var div = document.body.appendChild(document.createElement('div'));
       div.innerHTML = '<x-re-styled><span>yo</span></x-re-styled>';
     }
+  }, {
+    name: 'arguments are passed',
+    test: function () {
+      var random = Math.random();
+      var XArgs = new DOMClass({
+        constructor: wru.async(function () {
+          wru.assert(arguments[0] === random);
+        })
+      });
+      document.body.appendChild(new XArgs(random));
+    }
+  }, {
+    name: 'instanceof',
+    test: function () {
+      var XWCon = new DOMClass({
+        constructor: function () {}
+      });
+      var XWOCon = new DOMClass({});
+      wru.assert('with constructor', new XWCon instanceof XWCon);
+      wru.assert('without constructor', new XWOCon instanceof XWOCon);
+    }
   }
 ]);
