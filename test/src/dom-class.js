@@ -13,6 +13,27 @@ var DOMClass = (function (A, O) {'use strict';
     NAME = 'name',
     hOP = O.hasOwnProperty,
     empty = A.prototype,
+    copyOwn = function (source, target) {
+      for (var k, p = gOK(source), i = p.length; i--;) {
+        k = p[i];
+        if (ignore.indexOf(k) < 0 && !hOP.call(target, k)) {
+          dP(target, k, gOPD(source, k));
+        }
+      }
+    },
+    dP = O.defineProperty,
+    gOPD = O.getOwnPropertyDescriptor,
+    gOPN = O.getOwnPropertyNames || O.keys || function (o) {
+      var a = [], k;
+      for (k in o) if (hOP.call(o, k)) a.push(k);
+      return a;
+    },
+    gOPS = O.getOwnPropertySymbols || function () {
+      return empty;
+    },
+    gOK = function (obj) {
+      return gOPS(obj).concat(gOPN(obj));
+    },
     grantArguments = function (el, args) {
       if (!args.length) {
         var attr = el.getAttribute('data-arguments');
@@ -24,6 +45,7 @@ var DOMClass = (function (A, O) {'use strict';
       }
       return args;
     },
+    ignore = gOK(function () {}),
     setIfThere = function  (where, what, target, alias) {
       if (hOP.call(where, what)) {
         target[alias] = where[what];
@@ -100,11 +122,10 @@ var DOMClass = (function (A, O) {'use strict';
       if (init) createdCallback.apply(this, args);
     };
     constructor = new Class(el);
-    Element = document.registerElement(
-      key,
-      {prototype: constructor.prototype}
-    );
+    copyOwn(constructor, CustomElement);
+    Element = document.registerElement(key, {prototype: constructor.prototype});
     CustomElement.prototype = Element.prototype;
+    dP(Element.prototype, CONSTRUCTOR, {value: CustomElement});
     return CustomElement;
   };
 }(Array, Object));
