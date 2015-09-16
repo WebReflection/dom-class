@@ -1,10 +1,18 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "name": "dom-class",
   "description": "",
   "homepage": "https://github.com/WebReflection/dom-class",
-  "keywords": [],
+  "keywords": [
+    "custom",
+    "elements",
+    "class",
+    "vitamer",
+    "dom",
+    "restyle",
+    "es-class"
+  ],
   "author": {
     "name": "Andrea Giammarchi",
     "web": "http://webreflection.blogspot.com/"
@@ -28,10 +36,13 @@
     "tiny-cdn": "*"
   },
   "devDependencies": {
-    "wru": "*"
+    "wru": "*",
+    "document-register-element": "*",
+    "dom4": "*"
   },
   "dependencies": {
     "es-class": "*",
+    "query-result": "^0.1.3",
     "restyle": "*"
   }
 }

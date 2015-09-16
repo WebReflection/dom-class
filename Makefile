@@ -12,6 +12,12 @@ NODE = $(VAR)
 # make amd files
 AMD = $(VAR)
 
+VITAMER =	src/ie-lte-9.js \
+					node_modules/dom4/build/dom4.js \
+					node_modules/document-register-element/build/document-register-element.js \
+					node_modules/restyle/build/restyle.js \
+					node_modules/es-class/build/es-class.js
+
 # README constant
 
 
@@ -19,6 +25,8 @@ AMD = $(VAR)
 build:
 	make clean
 	make var
+	make vitamer
+	make vitamer-qr
 	make node
 	make amd
 	make test
@@ -34,6 +42,30 @@ var:
 	cat template/copyright build/no-copy.$(REPO).js >build/$(REPO).js
 	rm build/no-copy.$(REPO).max.js
 	rm build/no-copy.$(REPO).js
+
+vitamer:
+	mkdir -p build
+	cat template/var.before $(VAR) template/var.after >build/no-copy.$(REPO).max.js
+	node node_modules/uglify-js/bin/uglifyjs --verbose build/no-copy.$(REPO).max.js >build/no-copy.$(REPO).js
+	echo '' >build/vitamer.cr.js
+	cat $(VITAMER) build/vitamer.cr.js build/no-copy.$(REPO).js >build/vitamer.js
+	node -e 'var fs=require("fs");fs.writeFileSync("build/vitamer.cr.js",fs.readFileSync("build/vitamer.js").toString().replace(/\/\*\!.+?\*\//g,""));'
+	cat template/copyright build/vitamer.cr.js >build/vitamer.js
+	rm build/no-copy.$(REPO).max.js
+	rm build/no-copy.$(REPO).js
+	rm build/vitamer.cr.js
+
+vitamer-qr:
+	mkdir -p build
+	cat template/var.before $(VAR) template/var.after >build/no-copy.$(REPO).max.js
+	node node_modules/uglify-js/bin/uglifyjs --verbose build/no-copy.$(REPO).max.js >build/no-copy.$(REPO).js
+	echo '' >build/vitamer.cr.js
+	cat $(VITAMER) node_modules/query-result/build/query-result.js build/vitamer.cr.js build/no-copy.$(REPO).js >build/vitamer-qr.js
+	node -e 'var fs=require("fs");fs.writeFileSync("build/vitamer.cr.js",fs.readFileSync("build/vitamer-qr.js").toString().replace(/\/\*\!.+?\*\//g,""));'
+	cat template/copyright build/vitamer.cr.js >build/vitamer-qr.js
+	rm build/no-copy.$(REPO).max.js
+	rm build/no-copy.$(REPO).js
+	rm build/vitamer.cr.js
 
 # build node.js version
 node:
@@ -66,6 +98,8 @@ duk:
 size:
 	wc -c build/$(REPO).max.js
 	gzip -c build/$(REPO).js | wc -c
+	gzip -c build/vitamer.js | wc -c
+	gzip -c build/vitamer-qr.js | wc -c
 
 # hint built file
 hint:
