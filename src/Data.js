@@ -2,12 +2,12 @@
 var Data = {
   /*! (C) 2015 Andrea Giammarchi - Mit Style License */
   data: function data(key, value) {
-    var v, k = 'data--' + String(key).replace(
+    var v, k = 'data-dom-class-' + String(key).replace(
       /([a-z])([A-Z])/g,
       function (m, l, U) {
         return l + '-' + U.toLowerCase();
       }
-    );
+    ).toLowerCase();
     if (arguments.length === 2) {
       if (value == null) {
         this.removeAttribute(k);
@@ -21,7 +21,7 @@ var Data = {
   }
 };
 
-
+/*
 
 // test it for real
 var EDiv = new DOMClass({
@@ -41,3 +41,5 @@ ediv.data('info', {
   currentCity: 'London',
   sports: ['Snowboarding', 'Skydiving']
 });
+
+//*/
