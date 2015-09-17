@@ -1,7 +1,8 @@
 // Mixin Example - better than dataset
 var Data = {
+  /*! (C) 2015 Andrea Giammarchi - Mit Style License */
   data: function data(key, value) {
-    var v, k = 'data-' + String(key).replace(
+    var v, k = 'data-\x01-' + String(key).replace(
       /([a-z])([A-Z])/g,
       function (m, l, U) {
         return l + '-' + U.toLowerCase();

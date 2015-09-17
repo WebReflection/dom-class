@@ -1,5 +1,6 @@
 // Mixin Example - automatically serialized bindings
 var JSONKeys = (function () {
+  /*! (C) 2015 Andrea Giammarchi - Mit Style License */
   function bind(el, property) {
     Object.defineProperty(el, property, {
       configurable: true,
