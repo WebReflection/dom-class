@@ -4,6 +4,8 @@ dom-class [![build status](https://secure.travis-ci.org/WebReflection/dom-class.
 Built on top of [es-class](https://github.com/WebReflection/es-class#es-class-), and integrating handy [restyle](https://github.com/WebReflection/restyle#restyle) features, `DOMClass` is a lightweight, cross browser, simplification of [WebComponents](http://www.w3.org/standards/techs/components#w3c_all).
 
 
+Please read the [related blog post](https://www.webreflection.co.uk/blog/2015/09/17/simplified-web-components-via-dom-class) to know extra details about this project.
+
 ### How To
 All [es-class features](https://github.com/WebReflection/es-class#features-example) are included, and the `constructor` will be automatically used once  the component has been initialized.
 
