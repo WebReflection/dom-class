@@ -354,12 +354,10 @@ wru.test([
       var Celsius2Fahrenheit = DOMClass({
         'with': Bindings,
         name: 'celsius-2-Fahrenheit',
-        css: {
-          'input': {
-            maxWidth: 64,
-            border: {width: 1, color: 'silver'}
-          }
-        },
+        css: {'input': {
+          maxWidth: 64,
+          border: {width: 1, color: 'silver'}
+        }},
         template: '<div>' +
                     '<input name="celsius" type="number" data-bind="value:celsius">°C' +
                     '<span> ⇄ </span>' +
@@ -370,27 +368,33 @@ wru.test([
           fahrenheit: 0
         },
         constructor: function () {
-          this.addEventListener('input', function (e) {
-            switch (e.target.name) {
-              case 'celsius':
-                e.currentTarget.bindings.fahrenheit =
-                  9/5 * parseFloat(e.target.value) + 32;
-                break;
-              case 'fahrenheit':
-                e.currentTarget.bindings.celsius =
-                  5/9 * (parseFloat(e.target.value) - 32)
-                break;
-            }
-          });
+          this.query('[name="celsius"]').addEventListener('input', this);
+          this.query('[name="fahrenheit"]').addEventListener('input', this);
         },
         updateTemperature: function (which, temp) {
           if (which in this.bindings) {
             this.bindings[which] = temp;
             this.query('[name="' + which + '"]').dispatchEvent(
-              new CustomEvent('input', {bubbles: true})
+              new CustomEvent('input')
             ); 
           } else {
-            alert('how to convert ' + which + ' ?');
+            alert('dunno how to convert ' + which);
+          }
+        },
+        // using the class itself to handle events? Why not!
+        handleEvent: function (e) {
+          var el = e.currentTarget;
+          if (e.type === 'input') {
+            switch (el.name) {
+              case 'celsius':
+                this.bindings.fahrenheit =
+                  9/5 * parseFloat(el.value) + 32;
+                break;
+              case 'fahrenheit':
+                this.bindings.celsius =
+                  5/9 * (parseFloat(el.value) - 32)
+                break;
+            }
           }
         }
       });
