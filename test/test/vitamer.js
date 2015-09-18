@@ -296,5 +296,57 @@ wru.test([
         document.body.firstChild
       );
     }
+  }, {
+    name: 'bindings as mixin',
+    test: function () {
+      var failures = [];
+      var done = wru.async(function () {
+        if (failures.length) {
+          wru.assert([''].concat(failures, '').join('\n'), false);
+        } else {
+          wru.assert('OK');
+        }
+      });
+      function verify() {
+        var value = ent.bindings.owner;
+        if (!value) {
+          failures.push('bindings.owner');
+        } else if (value != ent.firstChild.getAttribute('custom')) {
+          failures.push('should be ' + value + ' but firstChild.getAttribute is ' + ent.firstChild.getAttribute('custom'));
+        } else if (value != ent.lastChild.value) {
+          failures.push('should be ' + value + ' but lastChild.value is ' + ent.lastChild.value);
+        } else if (value != ent.firstChild.childNodes[1].textContent) {
+          failures.push('should be ' + value + ' but childNodes[1].textContent is ' + ent.lastChild.value);
+        }
+      }
+      var EditableNameTag = DOMClass({
+        with: Bindings,
+        name: 'editable-name-tag',
+        template: '<p data-bind="custom:owner">'+
+                    'This is a <strong>{{owner}}</strong>\'s editable-name-tag.' +
+                  '</p>' +
+                  '<input data-bind="value:owner" placeholder="Your name here...">',
+        bindings: {owner: "Daniel"}
+      });
+      var ent = document.body.insertBefore(
+        new EditableNameTag,
+        document.body.firstChild
+      );
+      setTimeout(function () {
+        ent.bindings.owner = 'Andrea';
+        setTimeout(function () {
+          verify();
+          ent.firstChild.setAttribute('custom', 'WebReflection');
+          setTimeout(function () {
+            verify();
+            ent.lastChild.value = 'Daniel';
+            setTimeout(function () {
+              verify();
+              done();
+            }, 350);
+          }, 350);
+        }, 350);
+      }, 350);
+    }
   }
 ]);
