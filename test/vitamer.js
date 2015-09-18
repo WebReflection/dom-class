@@ -328,7 +328,7 @@ wru.test([
                   '<input data-bind="value:owner" placeholder="Your name here...">',
         bindings: {owner: "Daniel"}
       });
-      var ent = document.body.insertBefore(
+      window.ent = document.body.insertBefore(
         new EditableNameTag,
         document.body.firstChild
       );
@@ -347,6 +347,64 @@ wru.test([
           }, 350);
         }, 350);
       }, 350);
+    }
+  }, {
+    name: 'temperature two way',
+    test: function () {
+      var Celsius2Fahrenheit = DOMClass({
+        with: Bindings,
+        name: 'celsius-2-Fahrenheit',
+        css: {
+          'input': {
+            maxWidth: 64,
+            border: {width: 1, color: 'silver'}
+          }
+        },
+        template: '<div>' +
+                    '<input name="celsius" type="number" data-bind="value:celsius">°C' +
+                    '<span> ⇄ </span>' +
+                    '<input name="fahrenheit" type="number" data-bind="value:fahrenheit">°F' +
+                  '</div>',
+        bindings: {
+          celsius: 0,
+          fahrenheit: 0
+        },
+        constructor: function () {
+          this.addEventListener('input', function (e) {
+            switch (e.target.name) {
+              case 'celsius':
+                e.currentTarget.bindings.fahrenheit =
+                  9/5 * parseFloat(e.target.value) + 32;
+                break;
+              case 'fahrenheit':
+                e.currentTarget.bindings.celsius =
+                  5/9 * (parseFloat(e.target.value) - 32)
+                break;
+            }
+          });
+        },
+        updateTemperature: function (which, temp) {
+          if (which in this.bindings) {
+            this.bindings[which] = temp;
+            this.query('[name="' + which + '"]').dispatchEvent(
+              new CustomEvent('input', {bubbles: true})
+            ); 
+          } else {
+            alert('how to convert ' + which + ' ?');
+          }
+        }
+      });
+
+      window.c2f = document.body.insertBefore(
+        new Celsius2Fahrenheit,
+        document.body.firstChild
+      );
+
+      c2f.updateTemperature('celsius', 30);
+      setTimeout(wru.async(function () {
+        wru.assert(c2f.bindings.fahrenheit == 86);
+      }), 300);
+
     }
   }
 ]);

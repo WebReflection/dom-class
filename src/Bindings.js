@@ -393,10 +393,10 @@ var Bindings = (function (O) {'usew strict';
                 switch (previous) {
                   case STATE_OFF:
                   case STATE_DIRECT:
-                    if (hasMo) mo.disconnect();
+                    if (hasMo) self[MO_NAME].disconnect();
                     else if(hasDAM) off(el, DOM_ATTR_MODIFIED, dAM);
                     setAttribute.call(el, key, value);
-                    if (hasMo) mo.observe(self, whatToObserve);
+                    if (hasMo) self[MO_NAME].observe(self, whatToObserve);
                     else if(hasDAM) on(el, DOM_ATTR_MODIFIED, dAM);
                     break;
                 }
@@ -496,6 +496,58 @@ var Bindings = (function (O) {'usew strict';
 
 /*
 
+var Celsius2Fahrenheit = DOMClass({
+  with: Bindings,
+  name: 'celsius-2-Fahrenheit',
+  css: {
+    'input': {
+      maxWidth: 64,
+      border: {width: 1, color: 'silver'}
+    }
+  },
+  template: '<div>' +
+              '<input name="celsius" type="number" data-bind="value:celsius">°C' +
+              '<span> ⇄ </span>' +
+              '<input name="fahrenheit" type="number" data-bind="value:fahrenheit">°F' +
+            '</div>',
+  bindings: {
+    celsius: 32,
+    fahrenheit: 0
+  },
+  constructor: function () {
+    this.addEventListener('input', function (e) {
+      switch (e.target.name) {
+        case 'celsius':
+          e.currentTarget.bindings.fahrenheit =
+            9/5 * parseFloat(e.target.value) + 32;
+          break;
+        case 'fahrenheit':
+          e.currentTarget.bindings.celsius =
+            5/9 * (parseFloat(e.target.value) - 32)
+          break;
+      }
+    });
+  },
+  updateTemperature: function (which, temp) {
+    if (which in this.bindings) {
+      this.bindings[which] = temp;
+      this.query('[name="' + which + '"]').dispatchEvent(
+        new CustomEvent('input', {bubbles: true})
+      ); 
+    } else {
+      alert('how to convert ' + which + ' ?');
+    }
+  }
+});
+
+var c2f = document.body.insertBefore(
+  new Celsius2Fahrenheit,
+  document.body.firstChild
+);
+
+//*/
+
+/*
 var EditableNameTag = DOMClass({
   with: Bindings,
   name: 'editable-name-tag',
