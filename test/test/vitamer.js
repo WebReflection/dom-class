@@ -352,7 +352,7 @@ wru.test([
     name: 'temperature two way',
     test: function () {
       var Celsius2Fahrenheit = DOMClass({
-        with: Bindings,
+        'with': Bindings,
         name: 'celsius-2-Fahrenheit',
         css: {
           'input': {
@@ -401,9 +401,6 @@ wru.test([
       );
 
       c2f.updateTemperature('celsius', 30);
-      setTimeout(wru.async(function () {
-        wru.assert(c2f.bindings.fahrenheit == 86);
-      }), 300);
 
     }
   }
