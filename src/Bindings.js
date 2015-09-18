@@ -32,13 +32,6 @@ var Bindings = (function (O) {'usew strict';
     spaces = /^\s+|\s+$/g,
     // MutationObserver common options
     whatToObserve = {attributes: true, subtree: true},
-    // exported bindings string representation
-    bindingsToString = {
-      toString: {
-        configurable: true,
-        value: function toString() { return '[object bindings]'; }
-      }
-    },
     // moar shortcuts
     hOP = whatToObserve.hasOwnProperty,
     on = function (el, type, handler) {
@@ -109,13 +102,29 @@ var Bindings = (function (O) {'usew strict';
   }
 
   // if there's some binding in the wild, like inside
-  // a generic node, it will be bound "one way"
+  // a generic node, it will be bound "one way" here
   function boundTextNode(bindings, key, node) {
     dP(bindings, key, createGetSet(
       function get() { return node.nodeValue; },
       function set(value) {
-        // console.log('text', key, value);
         node.nodeValue = value;
+      }
+    ));
+    return node;
+  }
+
+  function createArgs(key) { return this[key]; }
+
+  function boundTransformer(source, bindings, method, keys, node) {
+    var
+      fn = source[method],
+      args = keys.split(comma)
+    ;
+    dP(bindings, key, createGetSet(
+      function get() { return node.nodeValue; },
+      function set(value) {
+        // console.log('text', key, value);
+        node.nodeValue = fn.apply(value, args.map(createArgs, bindings));
       }
     ));
     return node;
@@ -171,7 +180,7 @@ var Bindings = (function (O) {'usew strict';
         // maps DOM attribute names => bindings properties name
         map = create(null),
         // will be actually the exported binding object
-        values = create(null, bindingsToString),
+        values = create(info.bindings || null),
         // grab all nodes with some [data-bind="value:prop"] info
         attributes = self.queryAll('[data-bind]'),
         // used as every DOM_ATTR_MODIFIED handler
@@ -184,7 +193,10 @@ var Bindings = (function (O) {'usew strict';
         // will be updated later on if a MutationObserver is needed
         setMO = false,
         // default state
-        state = STATE_OFF
+        state = STATE_OFF,
+        // refer to the previous mo in case
+        // it's an update and not the first time
+        mo = hasMo && self[MO_NAME]
       ;
 
       // loop over all text nodes
@@ -194,7 +206,8 @@ var Bindings = (function (O) {'usew strict';
           value = node.nodeValue,
           nodes = [],
           bound = [],
-          parentNode = node.parentNode
+          parentNode = node.parentNode,
+          descriptor
         ;
         while (m = oneWay.exec(value)) {
           j = m.index;
@@ -216,8 +229,7 @@ var Bindings = (function (O) {'usew strict';
             // bound nodes are always after regular
             // unless we are at the end of the list
             if (i < bound.length) {
-              k = bound[i];
-              // bind it one-way to the property
+              k = trim.call(bound[i]);
               parentNode.append(
                 boundTextNode(
                   values, k, document.createTextNode(bindings[k] || '')
@@ -253,7 +265,7 @@ var Bindings = (function (O) {'usew strict';
             // and eventually the corresponding property name on the binding
             value = pair[1] || key,
             // we also need to know if somehow this property is already processed
-            hasSet = value in values,
+            hasSet = hOP.call(values, value),
             // and if it's one of those magic one
             // (value for inputs, selectedIndex for selects, checked for checkbox, etc)
             direct = key in el,
@@ -271,7 +283,7 @@ var Bindings = (function (O) {'usew strict';
           // if it's a direct property ...
           if (direct) {
             // we can simply set it as such using provided defaults
-            if (value in bindings) el[key] = bindings[value];
+            if (hOP.call(bindings, value)) el[key] = bindings[value];
             // console.log(gOPD(el, 'key'));
             // whenever we set such property via exported bindings
             dP(values, value, createGetSet(
@@ -380,7 +392,7 @@ var Bindings = (function (O) {'usew strict';
           // here we are in setAttribute land
           else {
             // we can use the native method to set default value, if any
-            if (value in bindings) setAttribute.call(el, key, bindings[value]);
+            if (hOP.call(bindings, value)) setAttribute.call(el, key, bindings[value]);
             // now we can set a different operation to update exported bindings
             dP(values, value, createGetSet(
               // we use getAttribute when accessed
@@ -393,10 +405,10 @@ var Bindings = (function (O) {'usew strict';
                 switch (previous) {
                   case STATE_OFF:
                   case STATE_DIRECT:
-                    if (hasMo) self[MO_NAME].disconnect();
+                    if (hasMo) mo.disconnect();
                     else if(hasDAM) off(el, DOM_ATTR_MODIFIED, dAM);
                     setAttribute.call(el, key, value);
-                    if (hasMo) self[MO_NAME].observe(self, whatToObserve);
+                    if (hasMo) mo.observe(self, whatToObserve);
                     else if(hasDAM) on(el, DOM_ATTR_MODIFIED, dAM);
                     break;
                 }
@@ -426,8 +438,6 @@ var Bindings = (function (O) {'usew strict';
 
       // if MutationObserver is available
       if (hasMo) {
-        // if there was a MutationObserver already attached to this node
-        mo = self[MO_NAME];
         // we should probably get rid of it
         if (mo) mo.disconnect();
         // if there was at least one attribute to listen to
@@ -493,6 +503,30 @@ var Bindings = (function (O) {'usew strict';
 }(Object));
 
 // examples
+
+
+/*
+
+var ToUpperCase = DOMClass({
+  with: Bindings,
+  template: '{{name}} {{surname}}',
+  bindings: {
+    get name() {
+      return this._name;
+    },
+    set name(value) {
+      this._name = value.toUpperCase();
+    }
+  }
+});
+
+var tuc = document.body.insertBefore(
+  new ToUpperCase,
+  document.body.firstChild
+);
+
+
+*/
 
 /*
 
