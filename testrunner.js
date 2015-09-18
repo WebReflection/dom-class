@@ -7,7 +7,7 @@ page.open(url, function (status) {
       var results = page.evaluate(function() {
         // remove the first node with the total from the following counts
         var passed = Math.max(0, document.querySelectorAll('.pass').length - 1);
-        //return {total: document.body.innerHTML};
+        // return {total: document.body.innerHTML};
         return {
           // retrieve the total executed tests number
           total: ''.concat(
