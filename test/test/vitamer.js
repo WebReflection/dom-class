@@ -320,7 +320,7 @@ wru.test([
         }
       }
       var EditableNameTag = DOMClass({
-        with: Bindings,
+        'with': Bindings,
         name: 'editable-name-tag',
         template: '<p data-bind="custom:owner">'+
                     'This is a <strong>{{owner}}</strong>\'s editable-name-tag.' +
