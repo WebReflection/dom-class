@@ -2,13 +2,19 @@ var Bindings = (function (O) {'usew strict';
 
   /*! (C) 2015 Andrea Giammarchi - Mit Style License */
 
+  // I must admit this wasn't fun ... so many quirks!
+  // works down to Android 2.3 and Windows Phone 7
+  // BB7 has problems defining properties on DOM Object
+  // ... I salute you BB7, it's been fun!
+
   var
     STATE_OFF = 0,
-    STATE_NATIVE = 1,
+    STATE_DIRECT = 1,
     STATE_ATTRIBUTE = 2,
     STATE_EVENT = 4,
     DOM_ATTR_MODIFIED = 'DOMAttrModified',
     MO_NAME = '__mo_bindings',
+    SET_ATTRIBUTE = 'setAttribute',
     create = O.create,
     dP = O.defineProperty,
     gPO = O.getPrototypeOf,
@@ -19,6 +25,14 @@ var Bindings = (function (O) {'usew strict';
     colon = /\s*:\s*/,
     spaces = /^\s+|\s+$/g,
     whatToObserve = {attributes: true, subtree: true},
+    bindingsToString = {
+      toString: {
+        configurable: true,
+        writable: true,
+        value: function toString() { return '[object bindings]'; }
+      }
+    },
+    hOP = whatToObserve.hasOwnProperty,
     on = function (el, type, handler) {
       el.addEventListener(type, handler, true);
     },
@@ -36,9 +50,55 @@ var Bindings = (function (O) {'usew strict';
         set: set
       };
     },
-    MO = window.MutationObserver,
-    hasMo = !!MO
+    // given an element and a property
+    // with direct info manipulation capability
+    // test if there is a descriptor that could be
+    // used in case it's wrapped/redefined
+    getInterceptor = function (el, key) {
+      var proto = el, descriptor;
+      while (proto && !hOP.call(proto, key)) proto = gPO(proto);
+      if (proto) {
+        descriptor = gOPD(proto, key);
+        if ('set' in descriptor && 'get' in descriptor) {
+          try {
+            if (descriptor.get.call(el) !== el[key]) {
+              throw descriptor;
+            }
+            return descriptor;
+          } catch (iOS) {}
+        }
+      }
+      return null;
+    },
+    MO =  window.MutationObserver ||
+          window.WebKitMutationObserver ||
+          window.MozMutationObserver,
+    hasMo = !!MO,
+    schedule = function (fn) {
+      // requestAnimationFrame would be too greedy
+      // however, it has its advantages like not bothering
+      // when the window/tab is not focused or something else.
+      // in this way we are sure we'll reschedule the timer
+      // only if rAF executes, instead of forever re-scheduled
+      return setTimeout(requestAnimationFrame, 100, fn);
+    },
+    cancel = clearTimeout, // cancelAnimationFrame
+    hasDAM = hasMo
   ;
+
+  // verify if the DOMAttrModified listener works at all
+  if (!hasDAM) {
+    (function verifyItWorks(html, uid) {
+      function suchAGoodBoy() { hasDAM = true; }
+      on(html, DOM_ATTR_MODIFIED, suchAGoodBoy);
+      html[SET_ATTRIBUTE](uid, 1);
+      html.removeAttribute(uid);
+      off(html, DOM_ATTR_MODIFIED, suchAGoodBoy);
+    }(
+      document.documentElement,
+      'dom-' + (Math.random() + '-class').slice(2)
+    ));
+  }
 
   function boundTextNode(bindings, key, node) {
     dP(bindings, key, createGetSet(
@@ -84,21 +144,20 @@ var Bindings = (function (O) {'usew strict';
         self = this,
         document = self.ownerDocument || document,
         bindings = info.bindings || {},
-        // onAttached = self.attachedCallback,
-        // onDetached = self.detachedCallback,
         textNodes = grabAllTextNodes(self, []),
-        map = hasMo && create(null),
-        values = create(null),
+        map = create(null),
+        values = create(null, bindingsToString),
         attributes = textNodes.slice.call(
           self.querySelectorAll('[data-bind]')
         ),
         state = STATE_OFF,
         dAM = function (e) {
-          var previous = state;
-          state = STATE_ATTRIBUTE;
-          values[value] = e.currentTarget.getAttribute(key);
+          var key = e.attrName, previous = state;
+          state = STATE_EVENT;
+          values[map[key]] = e.currentTarget.getAttribute(key);
           state = previous;
-        }
+        },
+        setMO = false
       ;
 
       textNodes.forEach(function (node) {
@@ -136,28 +195,42 @@ var Bindings = (function (O) {'usew strict';
       });
 
       attributes.forEach(function (el) {
-        el.getAttribute('data-bind').split(comma).forEach(function (info) {
+        var
+          setAttribute = el[SET_ATTRIBUTE],
+          fakeSetAttribute = function (key, value) {
+            var previous = state;
+            state = STATE_EVENT;  // it's a white lie to simulate DAM
+            setAttribute.call(this, key, value);
+            // update only known  values
+            if (key in map && this === el) values[map[key]] = value;
+            state = previous;
+          }
+        ;
+        el.getAttribute('data-bind').split(comma).forEach(function (info, i) {
           var
             pair = info.split(colon),
             key = pair[0],
             value = pair[1] || key,
             hasSet = value in values,
-            native = key in el,
+            direct = key in el,
             handler,
             setter,
             descriptor,
-            proto
+            onAttached,
+            onDetached,
+            v
           ;
+          map[key] = value;
           if (hasSet) setter = gOPD(values, value).set;
-          if (native) {
+          if (direct) {
             el[key] = bindings[value] || '';
             // console.log(gOPD(el, 'key'));
             dP(values, value, createGetSet(
               function get() { return el[key]; },
               function set(value) {
                 var previous = state;
-                state = STATE_NATIVE;
-                // console.log('native', previous, state);
+                state = STATE_DIRECT;
+                // console.log('direct', previous, state);
                 switch (previous) {
                   case STATE_OFF:
                   case STATE_EVENT:
@@ -182,11 +255,9 @@ var Bindings = (function (O) {'usew strict';
                 on(el, 'change', handler);
                 break;
             }
-            proto = el;
-            do {
-              descriptor = gOPD(proto, key);
-            } while(!descriptor && (proto = gPO(proto)));
-            if (descriptor && ('set' in descriptor)) {
+            descriptor = getInterceptor(el, key);
+            // if we can reuse the descriptor, we're better off this way
+            if (descriptor) {
               dP(el, key, {
                 configurable: true,
                 enumerable: descriptor.enumerable,
@@ -200,8 +271,39 @@ var Bindings = (function (O) {'usew strict';
                 }
               });
             }
+            // otherwise we need some utterly ugly polling fallback
+            else {
+              v = el[key];
+              handler = function () {
+                if (el[key] !== v) {
+                  var previous = state;
+                  state = STATE_ATTRIBUTE;
+                  v = el[key];
+                  values[value] = v;
+                  state = previous;
+                }
+                i = schedule(handler);
+              };
+              onAttached = self.attachedCallback;
+              onDetached = self.detachedCallback;
+              dP(self, 'attachedCallback', {
+                configurable: true,
+                value: function () {
+                  handler(cancel(i));
+                  if (onAttached) onAttached.apply(el, arguments);
+                }
+              });
+              dP(self, 'detachedCallback', {
+                configurable: true,
+                value: function () {
+                  cancel(i);
+                  if (onDetached) onDetached.apply(el, arguments);
+                }
+              });
+              handler();
+            }
           } else {
-            el.setAttribute(key, bindings[value]);
+            setAttribute.call(el, key, bindings[value]);
             dP(values, value, createGetSet(
               function get() { return el.getAttribute(key); },
               function set(value) {
@@ -210,20 +312,26 @@ var Bindings = (function (O) {'usew strict';
                 // console.log('attribute', previous, state);
                 switch (previous) {
                   case STATE_OFF:
-                  case STATE_NATIVE:
+                  case STATE_DIRECT:
                     if (hasMo) mo.disconnect();
-                    else off(el, DOM_ATTR_MODIFIED, dAM);
-                    el.setAttribute(key, value);
+                    else if(hasDAM) off(el, DOM_ATTR_MODIFIED, dAM);
+                    setAttribute.call(el, key, value);
                     if (hasMo) mo.observe(self, whatToObserve);
-                    else on(el, DOM_ATTR_MODIFIED, dAM);
+                    else if(hasDAM) on(el, DOM_ATTR_MODIFIED, dAM);
                     break;
                 }
                 if (hasSet) setter(value);
                 state = previous;
               }
             ));
-            if (hasMo) map[key] = value;
-            else el.addEventListener(DOM_ATTR_MODIFIED, dAM, true);
+            if (hasMo) setMO = true;
+            else if (hasDAM) on(el, DOM_ATTR_MODIFIED, dAM);
+            else if (el[SET_ATTRIBUTE] !== fakeSetAttribute){
+              dP(el, SET_ATTRIBUTE, {
+                configurable: true,
+                value: fakeSetAttribute
+              });
+            }
           }
         });
       });
@@ -231,7 +339,7 @@ var Bindings = (function (O) {'usew strict';
       if (hasMo) {
         mo = self[MO_NAME];
         if (mo) mo.disconnect();
-        if (Object.keys(map).length) {
+        if (setMO) {
           mo = dP(self, MO_NAME, {
             configurable: true,
             value: new MO(function (records) {
@@ -271,7 +379,7 @@ var Bindings = (function (O) {'usew strict';
 
         }
       }
-      
+
       return dP(self, 'bindings', {
         configurable: true,
         enumerable: true,
