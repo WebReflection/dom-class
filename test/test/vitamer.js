@@ -296,7 +296,7 @@ wru.test([
         document.body.firstChild
       );
     }
-  }/*, {
+  }, {
     name: 'bindings as mixin',
     test: function () {
       var failures = [];
@@ -348,5 +348,5 @@ wru.test([
         }, 350);
       }, 350);
     }
-  }*/
+  }
 ]);
