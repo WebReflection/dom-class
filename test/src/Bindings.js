@@ -184,6 +184,15 @@ var Bindings = Bindings || (function (O) {'usew strict';
     return allText;
   }
 
+  // used to understand if and how to dispatch events
+  function convertShenanigansToNumber(i) {
+    switch (true) {
+      case typeof i === 'number': return i < 0 ? -1 : i;
+      case i: return 133;
+      default: return -1;
+    }
+  }
+
   return {
 
     // if the template is the same per each component
@@ -213,6 +222,7 @@ var Bindings = Bindings || (function (O) {'usew strict';
         bindings = info.bindings || {},
         // will find all possible nodes with one-way bindings
         textNodes = grabAllTextNodes(self, []),
+        // holds singular properties values related to nodes or attributes
         autobots = create(null),
         // maps DOM attribute names => bindings properties name
         map = create(null),
@@ -233,7 +243,38 @@ var Bindings = Bindings || (function (O) {'usew strict';
         state = STATE_OFF,
         // refer to the previous mo in case
         // it's an update and not the first time
-        mo = hasMo && self[MO_NAME]
+        mo = hasMo && self[MO_NAME],
+        // NOTIFICATIONS
+        // if bindings are dispatched, figure out in which frequency
+        dispatchDelay = convertShenanigansToNumber(
+          info.dispatchBindings || this.dispatchBindings
+        ),
+        // internal boolean flag, if dispatchDelay < 0 don't
+        dispatchBindings = -1 < dispatchDelay,
+        // in case there are bindings to dispatch, use a storage to filter notifications
+        tobeNotified = dispatchBindings && create(null),
+        // used to schedule and clean up notifications
+        // the value 0 means ASAP and in that case rAF is used instead of setTimeout
+        dispatcher = dispatchBindings && function (key) {
+          delete tobeNotified[key];
+          self.dispatchEvent(new CustomEvent('bindingChanged', {detail: {
+            key: key,
+            value: values[key]
+          }}));
+        },
+        // schedules the dispatcher accordingly with the delay
+        // if the dispatchDelay is 0 will use rAF instead (ASAP)
+        dispatchScheduler = dispatchDelay ?
+          function (key) {
+            if (key in tobeNotified) clearTimeout(tobeNotified[key]);
+            tobeNotified[key] = setTimeout(dispatcher, dispatchDelay, key);
+          } :
+          function (key) {
+            if (key in tobeNotified) cancelAnimationFrame(tobeNotified[key]);
+            tobeNotified[key] = requestAnimationFrame(function () {
+              dispatcher(key);
+            });
+          }
       ;
 
       // loop over all text nodes
@@ -358,19 +399,20 @@ var Bindings = Bindings || (function (O) {'usew strict';
                 // we either return it directly
                 function get() { return el[key]; },
                 // or we set it directly
-                function set(value) {
+                function set(v) {
                   var previous = state;
                   state = STATE_DIRECT;
                   // console.log('direct', previous, state);
                   switch (previous) {
                     case STATE_OFF:
                     case STATE_EVENT:
-                      el[key] = value;
+                      el[key] = v;
+                      if (dispatchBindings) dispatchScheduler(value);
                       break;
                   }
                   // if there was already a setter
                   // we should probably invoke it
-                  if (hasSet) setter(value);
+                  if (hasSet) setter(v);
                   state = previous;
                 }
               ));
@@ -468,7 +510,7 @@ var Bindings = Bindings || (function (O) {'usew strict';
                 // we use getAttribute when accessed
                 function get() { return el[GET_ATTRIBUTE](key); },
                 // and we use native setAttribute when changed
-                function set(value) {
+                function set(v) {
                   var previous = state;
                   state = STATE_ATTRIBUTE;
                   // console.log('attribute', previous, state);
@@ -477,14 +519,15 @@ var Bindings = Bindings || (function (O) {'usew strict';
                     case STATE_DIRECT:
                       if (hasMo) mo.disconnect();
                       else if(hasDAM) off(el, DOM_ATTR_MODIFIED, dAM);
-                      setAttribute.call(el, key, value);
+                      setAttribute.call(el, key, v);
+                      if (dispatchBindings) dispatchScheduler(value);
                       if (hasMo) mo.observe(self, whatToObserve);
                       else if(hasDAM) on(el, DOM_ATTR_MODIFIED, dAM);
                       break;
                   }
                   // here again, if there was already a setter
                   // we should probably invoke it
-                  if (hasSet) setter(value);
+                  if (hasSet) setter(v);
                   state = previous;
                 }
               ));
