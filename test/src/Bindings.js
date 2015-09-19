@@ -26,10 +26,11 @@ var Bindings = (function (O) {'usew strict';
     gOPD = O.getOwnPropertyDescriptor,
     // RegExp used all the time
     ignore = /IFRAME|NOFRAMES|NOSCRIPT|SCRIPT|SELECT|STYLE|TEXTAREA|[a-z]/,
-    oneWay = /\{\{\S+?\}\}/g,
+    oneWay = /\{\{[\S\s]+?\}\}/g,
     comma = /\s*,\s*/,
     colon = /\s*:\s*/,
     spaces = /^\s+|\s+$/g,
+    decepticons = /^([\S]+?)\(([\S\s]*?)\)/,
     // MutationObserver common options
     whatToObserve = {attributes: true, subtree: true},
     // moar shortcuts
@@ -104,29 +105,47 @@ var Bindings = (function (O) {'usew strict';
   // if there's some binding in the wild, like inside
   // a generic node, it will be bound "one way" here
   function boundTextNode(bindings, key, node) {
+    var setter = hOP.call(bindings, key) && gOPD(bindings, key).set;
     dP(bindings, key, createGetSet(
       function get() { return node.nodeValue; },
       function set(value) {
         node.nodeValue = value;
+        if (setter) setter(value);
       }
     ));
     return node;
   }
 
-  function createArgs(key) { return this[key]; }
+  function getArgs() {
+    for (var a = [], i = 0; i < arguments.length; i++) {
+      a[i] = this[arguments[i]];
+    }
+    return a;
+  }
 
-  function boundTransformer(source, bindings, method, keys, node) {
+  function boundTransformer(source, autobots, bindings, method, keys, node) {
     var
       fn = source[method],
       args = keys.split(comma)
     ;
-    dP(bindings, key, createGetSet(
-      function get() { return node.nodeValue; },
-      function set(value) {
-        // console.log('text', key, value);
-        node.nodeValue = fn.apply(value, args.map(createArgs, bindings));
-      }
-    ));
+    args.forEach(function (key) {
+      var
+        has = hOP.call(bindings, key),
+        descriptor = has && gOPD(bindings, key),
+        getter = has && descriptor.get,
+        setter = has && descriptor.set
+      ;
+      autobots[key] = source[key];
+      dP(bindings, key, createGetSet(
+        has ? getter : function get() { return autobots[key]; },
+        function set(value) {
+          autobots[key] = value;
+          node.nodeValue = fn.apply(bindings, getArgs.apply(autobots, args));
+          if (has) setter(value);
+        }
+      ));
+    });
+    node.nodeValue = fn.apply(null, getArgs.apply(autobots, args));
     return node;
   }
 
@@ -177,6 +196,7 @@ var Bindings = (function (O) {'usew strict';
         bindings = info.bindings || {},
         // will find all possible nodes with one-way bindings
         textNodes = grabAllTextNodes(self, []),
+        autobots = create(null),
         // maps DOM attribute names => bindings properties name
         map = create(null),
         // will be actually the exported binding object
@@ -231,9 +251,13 @@ var Bindings = (function (O) {'usew strict';
             if (i < bound.length) {
               k = trim.call(bound[i]);
               parentNode.append(
-                boundTextNode(
-                  values, k, document.createTextNode(bindings[k] || '')
-                )
+                (m = decepticons.exec(k)) ?
+                  boundTransformer(
+                    bindings, autobots, values, m[1], m[2], document.createTextNode('')
+                  ) :
+                  boundTextNode(
+                    values, k, document.createTextNode(bindings[k] || '')
+                  )
               );
             }
           });
@@ -504,6 +528,17 @@ var Bindings = (function (O) {'usew strict';
 
 // examples
 
+/*
+
+document.body.innerHTML = '';
+Bindings.withBindings.call(document.body, {
+  template: '{{sum(a,b)}} or just {{a}} and just {{b}}',
+  bindings: {a: 1, b: 2, sum: function (a, b) {
+    return a + b;
+  }}
+});
+
+*/
 
 /*
 
@@ -636,11 +671,11 @@ setTimeout(function () {
 
 /*
 Bindings.withBindings.call(document.body, {
-  template: '[a]{{b}}[c]',
-  bindings: {b: '<b>wut</b>'}
+  template: '{{dumber}} and {{dumber}}',
+  bindings: {dumber: 'dumber'}
 });
 
-document.body.bindings.b = 'hello there';
+document.body.bindings.dumber = 'yo';
 //*/
 
 /*
