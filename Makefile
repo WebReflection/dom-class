@@ -29,6 +29,7 @@ build:
 	make vitamer-qr
 	make node
 	make amd
+	make mixins
 	make test
 	make hint
 	make size
@@ -42,6 +43,14 @@ var:
 	cat template/copyright build/no-copy.$(REPO).js >build/$(REPO).js
 	rm build/no-copy.$(REPO).max.js
 	rm build/no-copy.$(REPO).js
+	node node_modules/uglify-js/bin/uglifyjs --verbose src/Bindings.js >build/no-copy.bindings.js
+
+mixins:
+	node node_modules/uglify-js/bin/uglifyjs --verbose src/Data.js >build/no-copy.data.js
+	node node_modules/uglify-js/bin/uglifyjs --verbose src/Bindings.js >build/no-copy.bindings.js
+	cat template/copyright build/no-copy.data.js >build/dom-class-data.js
+	cat template/copyright build/no-copy.bindings.js >build/dom-class-bindings.js
+	rm build/no-copy*
 
 vitamer:
 	mkdir -p build
@@ -104,6 +113,7 @@ size:
 # hint built file
 hint:
 	node node_modules/jshint/bin/jshint build/$(REPO).max.js
+	node node_modules/jshint/bin/jshint src/Bindings.js
 
 # clean/remove build folder
 clean:

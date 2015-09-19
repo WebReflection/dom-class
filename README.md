@@ -91,7 +91,8 @@ var XSquare = new DOMClass({
   constructor: function (text) {
     this.innerHTML = '<span>' + text + '</span>';
     // if there is a css in the prototype,
-    // a fresh new restyle object will be assigned at runtime
+    // we can use the css property to overwrite/set the inherited one
+    // following is the equivalent of this.css = { ... }
     this.css.set({
       // empty selector, same as using 'x-square'
       // to reference itself
