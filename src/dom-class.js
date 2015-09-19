@@ -7,6 +7,7 @@ var DOMClass = (function (A, O) {'use strict';
     CONSTRUCTOR = 'constructor',
     CONSTRUCTOR_CALLBACK = 'createdCallback',
     CSS = 'css',
+    STYLE = '<style>',
     DETACHED = 'onDetached',
     DETACHED_CALLBAK = 'detachedCallback',
     EXTENDS = 'extends',
@@ -68,6 +69,21 @@ var DOMClass = (function (A, O) {'use strict';
         hOP.call(uids, name) ? ++uids[name] : (uids[name] = 0)
       );
     },
+    lazyStyle = function (el, key, uniqueClassId) {
+      var style;
+      el.setAttribute('dom-class-uid', uniqueClassId);
+      dP(el, CSS, {
+        configurable: true,
+        get: function () {
+          return style || (style = restyle(
+            key + '[dom-class-uid="' + uniqueClassId + '"]', {}
+          ));
+        },
+        set: function (info) {
+          el[CSS].replace(info);
+        }
+      });
+    },
     uids = {},
     i = 0
   ;
@@ -111,14 +127,11 @@ var DOMClass = (function (A, O) {'use strict';
       HTMLElement.prototype
     ;
     key = hOP.call(description, NAME) ? description[NAME] : ('x-dom-class-' + i++);
-    if (css) el[CSS] = restyle(key, description[CSS]);
+    if (css) el[STYLE] = restyle(key, description[CSS]);
     el[CONSTRUCTOR_CALLBACK] = function () {
       args = grantArguments(this, args);
       constructor.apply(this, args);
-      if (css) {
-        this.classList.add(uid(key));
-        this.css = restyle(key + '.' + this.className.split(' ').pop(), {});
-      }
+      if (css) lazyStyle(this, key, uid(key));
       if (init) createdCallback.apply(this, args);
     };
     constructor = new Class(el);
