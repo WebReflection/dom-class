@@ -169,12 +169,15 @@ pages:
 	cp -rf src ~/tmp/$(REPO)
 	cp -rf build ~/tmp/$(REPO)
 	cp -rf test ~/tmp/$(REPO)
+	cp -rf demo ~/tmp/$(REPO)
 	cp index.html ~/tmp/$(REPO)
 	git checkout gh-pages
 	cp ~/tmp/.gitignore ./
 	mkdir -p test
 	rm -rf test
 	cp -rf ~/tmp/$(REPO) test
+	cp -rf test/demo .
+	rm -rf test/demo
 	git add .gitignore
 	git add test
 	git add test/.
