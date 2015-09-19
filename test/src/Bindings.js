@@ -14,11 +14,11 @@ var Bindings = Bindings || (function (O) {'usew strict';
     STATE_ATTRIBUTE = 2,
     STATE_EVENT = 4,
     DOM_ATTR_MODIFIED = 'DOMAttrModified',
-    MO_NAME = '__mo_bindings',
     ON_ATTACHED = 'attachedCallback',
     ON_DETACHED = 'detachedCallback',
     GET_ATTRIBUTE = 'getAttribute',
     SET_ATTRIBUTE = 'setAttribute',
+    DROP_BINDINGS = 'destroyBindings',
     // shortcuts
     create = O.create,
     dP = O.defineProperty,
@@ -44,7 +44,7 @@ var Bindings = Bindings || (function (O) {'usew strict';
     off = function (el, type, handler) {
       el.removeEventListener(type, handler, true);
     },
-    trim = MO_NAME.trim || function () {
+    trim = DOM_ATTR_MODIFIED.trim || function () {
       return this.replace(spaces, '');
     },
     createGetSet = function (get, set) {
@@ -166,7 +166,7 @@ var Bindings = Bindings || (function (O) {'usew strict';
     onUpdate(method.apply(bindings, getArgs.apply(autobots, args)));
   }
 
-  // plain borrowed from twemoji, that's my code anyway ^_^
+  // plain borrowed from twemoji ... but that's my code anyway ^_^
   function grabAllTextNodes(node, allText) {
     var
       childNodes = node.childNodes,
@@ -193,23 +193,35 @@ var Bindings = Bindings || (function (O) {'usew strict';
     }
   }
 
+  // set a binding property to a generic Custom Element
+  function setBindings(ce, bindings) {
+    dP(ce, 'bindings', {
+      configurable: true,
+      enumerable: true,
+      writable: false,
+      value: bindings
+    });
+  }
+
   return {
 
     // if the template is the same per each component
     // or there are common bindings, it does everything once created
     init: function () {
-      if (this.template || this.bindings) this.withBindings(this);
+      if (this.template || this.bindings) this.createBindings(this);
     },
 
-    // but it's also possible to lazy atatch bindings later on
-    // changing them in the wild might work but it's not fully tested
-    // and definitively it's not suggested (also quite dirty pattern)
-    withBindings: function (info) {
+    // but it's also possible to lazy attach bindings later on
+    // please not ce.dropBindings() will be called if already present
+    createBindings: function (info) {
+
+      // if it's been invoked multiple times, clean  up all the things
+      if (hOP.call(this, DROP_BINDINGS)) this[DROP_BINDINGS]();
 
       // if the template is there but the node has no content
       // meaning it has been probably created via JS
       // it will inject the template right away
-      if (info.template && !trim.call(this.textContent)) {
+      if (info.template && !trim.call(this.innerHTML)) {
         this.innerHTML = info.template;
       }
 
@@ -241,9 +253,6 @@ var Bindings = Bindings || (function (O) {'usew strict';
         setMO = false,
         // default state
         state = STATE_OFF,
-        // refer to the previous mo in case
-        // it's an update and not the first time
-        mo = hasMo && self[MO_NAME],
         // NOTIFICATIONS
         // if bindings are dispatched, figure out in which frequency
         dispatchDelay = convertShenanigansToNumber(
@@ -274,8 +283,46 @@ var Bindings = Bindings || (function (O) {'usew strict';
             tobeNotified[key] = requestAnimationFrame(function () {
               dispatcher(key);
             });
-          }
+          },
+        // whenever it's dropped and nothing else should happe in this scope
+        dropped = false,
+        // will be eventually used as MutationObserver instance
+        mo
       ;
+
+      dP(self, DROP_BINDINGS, {
+        configurable: true,
+        value: function () {
+          var key;
+          // if already dropped get out
+          if (dropped) return;
+          // flag it as dropped
+          dropped = true;
+          // clean up all scheduled callbacks
+          if (dispatchBindings) {
+            for (key in tobeNotified) {
+              if (dispatchDelay) clearTimeout(tobeNotified[key]);
+              else cancelAnimationFrame(tobeNotified[key]);
+              delete tobeNotified[key];
+            }
+          }
+          // clean up all info, getters, setters, etc
+          for (key in autobots) delete autobots[key];
+          for (key in map) delete map[key];
+          for (key in values) delete values[key];
+          setBindings(self, {});
+          // disconnect the MutationObserver
+          if (setMO) mo.disconnect();
+          // or remove  all listeners
+          else if (hasDAM) attributes.forEach(function (el) {
+            off(el, DOM_ATTR_MODIFIED, dAM);
+          });
+          // or drop the fake setAttribute method
+          else attributes.forEach(function (el) {
+            delete el[SET_ATTRIBUTE];
+          });
+        }
+      });
 
       // loop over all text nodes
       textNodes.forEach(function (node) {
@@ -381,8 +428,8 @@ var Bindings = Bindings || (function (O) {'usew strict';
               method: bindings[m[1]],
               source: bindings,
               onUpdate: direct ?
-                function direct(value) { el[key] = value; } :
-                function indirect(value) { setAttribute.call(el, key, value); }
+                function (value) { el[key] = value; } :
+                function (value) { setAttribute.call(el, key, value); }
             });
           } else {
             // handy to bring back property name from an attribute one
@@ -419,6 +466,7 @@ var Bindings = Bindings || (function (O) {'usew strict';
               // in few specific cases where the input could change via UI
               // we should update exported bindings property too
               handler = function (e) {
+                if (dropped) return off(el, e.type, handler);
                 var previous = state;
                 state = STATE_EVENT;
                 values[value] = el[key];
@@ -440,6 +488,7 @@ var Bindings = Bindings || (function (O) {'usew strict';
               descriptor = getInterceptor(el, key);
               // if we can reuse the descriptor, we're better off this way
               if (descriptor) {
+                direct = hOP.call(el, key);
                 dP(el, key, {
                   configurable: true,
                   enumerable: descriptor.enumerable,
@@ -448,6 +497,8 @@ var Bindings = Bindings || (function (O) {'usew strict';
                   // use the descriptor once set to update the element value
                   // and also update exported bindings property
                   set: function (v) {
+                    if (dropped) return direct ?
+                      dP(el, key, descriptor) : delete el[key];
                     var previous = state;
                     state = STATE_ATTRIBUTE;
                     descriptor.set.call(el, v);
@@ -463,6 +514,8 @@ var Bindings = Bindings || (function (O) {'usew strict';
                 v = el[key];
                 // each time the following runs ...
                 handler = function () {
+                  // don't reschedule if dropped
+                  if (dropped) return;
                   // if direct property access is different
                   // from the known value
                   if (el[key] !== v) {
@@ -486,14 +539,14 @@ var Bindings = Bindings || (function (O) {'usew strict';
                 dP(self, ON_ATTACHED, {
                   configurable: true,
                   value: function () {
-                    handler(cancel(i));
+                    if (!dropped) handler(cancel(i));
                     if (onAttached) onAttached.apply(el, arguments);
                   }
                 });
                 dP(self, ON_DETACHED, {
                   configurable: true,
                   value: function () {
-                    cancel(i);
+                    if (!dropped) cancel(i);
                     if (onDetached) onDetached.apply(el, arguments);
                   }
                 });
@@ -550,67 +603,56 @@ var Bindings = Bindings || (function (O) {'usew strict';
         });
       });
 
-      // if MutationObserver is available
-      if (hasMo) {
-        // we should probably get rid of it
-        if (mo) mo.disconnect();
-        // if there was at least one attribute to listen to
-        if (setMO) {
-          // we can recreate a MutationObserver
-          mo = dP(self, MO_NAME, {
-            configurable: true,
-            // so that per each record
-            value: new MO(function (records) {
-              var previous = state;
-              state = STATE_EVENT;
-              // console.log('Mutation Observer', previous, state);
-              for (var key, r, i = 0; i < records.length; i++) {
-                r = records[i];
-                // if it's about an attribute
-                if (r.type === 'attributes') {
-                  key = r.attributeName;
-                  // and there is a key to take care of
-                  // and such key is also well known
-                  /* jshint eqnull:true */
-                  if (key != null && key in map) {
-                    // we can update the value
-                    values[map[key]] = r.target[GET_ATTRIBUTE](key);
-                  }
-                }
+      // if MutationObserver is available and
+      // if there was at least one attribute to listen to
+      if (setMO) {
+        // we can recreate a MutationObserver
+        mo = new MO(function (records) {
+          var previous = state;
+          state = STATE_EVENT;
+          // console.log('Mutation Observer', previous, state);
+          for (var key, r, i = 0; i < records.length; i++) {
+            r = records[i];
+            // if it's about an attribute
+            if (r.type === 'attributes') {
+              key = r.attributeName;
+              // and there is a key to take care of
+              // and such key is also well known
+              /* jshint eqnull:true */
+              if (key != null && key in map) {
+                // we can update the value
+                values[map[key]] = r.target[GET_ATTRIBUTE](key);
               }
-              state = previous;
-            })
-          })[MO_NAME];
-          // let's observe the node and its subnodes
-          mo.observe(self, whatToObserve);
-
-          /* // TODO: should mo stop listening when offline ?
-          dP(self, 'attachedCallback', {
-            configurable: true,
-            value: function () {
-              mo.observe(self, whatToObserve);
-              if (onAttached) onAttached.apply(self, arguments);
             }
-          });
-          dP(self, 'detachedCallback', {
-            configurable: true,
-            value: function () {
-              mo.disconnect();
-              if (onDetached) onDetached.apply(self, arguments);
-            }
-          });
-          //*/
+          }
+          state = previous;
+        });
+        // let's observe the node and its subnodes
+        mo.observe(self, whatToObserve);
 
-        }
+        /* // TODO: should mo stop listening when offline ?
+        dP(self, 'attachedCallback', {
+          configurable: true,
+          value: function () {
+            mo.observe(self, whatToObserve);
+            if (onAttached) onAttached.apply(self, arguments);
+          }
+        });
+        dP(self, 'detachedCallback', {
+          configurable: true,
+          value: function () {
+            mo.disconnect();
+            if (onDetached) onDetached.apply(self, arguments);
+          }
+        });
+        //*/
+
       }
 
-      // exported bindings
-      return dP(self, 'bindings', {
-        configurable: true,
-        enumerable: true,
-        writable: false,
-        value: values
-      });
+      // values object is the one exported as bindings
+      setBindings(self, values);
+
+      return self;
 
     }
   };
