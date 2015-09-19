@@ -420,12 +420,16 @@ wru.test([
         bindings: {a: 0, b: 0, sum: function (a, b) {
           var result = parseFloat(a) + parseFloat(b);
           return isNaN(result) ? '?' : result;
-        }}
+        }},
+        dispatchBindings: true
       });
       window.sot = document.body.insertBefore(
         new SumOfTwo,
         document.body.firstChild
       );
+      sot.addEventListener('bindingChanged', function (e) {
+        if (window.console) console.log(e.detail);
+      });
     }
   }
 ]);
