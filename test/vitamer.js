@@ -412,9 +412,9 @@ wru.test([
     test: function () {
       var SumOfTwo = DOMClass({
         'with': Bindings,
-        template: '<input data-bind="value:a">' +
-                  '<input data-bind="value:b">' +
-                  '<input data-bind="value:sum(a, b)" disabled>' +
+        template: '<input data-bind="value:a" type="number">' +
+                  '<input data-bind="value:b" type="number">' +
+                  '<input data-bind="value:sum(a, b)">' +
                   '<br/>' +
                   'The sum of {{a}} + {{b}} is equal to {{sum(a, b)}}',
         bindings: {a: 0, b: 0, sum: function (a, b) {
