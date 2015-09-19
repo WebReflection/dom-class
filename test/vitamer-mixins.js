@@ -320,7 +320,7 @@ wru.test([
         }
       }
       var EditableNameTag = DOMClass({
-        'with': Bindings,
+        'with': DOMClass.bindings,
         name: 'editable-name-tag',
         template: '<p data-bind="custom:owner">'+
                     'This is a <strong>{{owner}}</strong>\'s editable-name-tag.' +
@@ -352,7 +352,7 @@ wru.test([
     name: 'temperature two way',
     test: function () {
       var Celsius2Fahrenheit = DOMClass({
-        'with': Bindings,
+        'with': DOMClass.bindings,
         name: 'celsius-2-Fahrenheit',
         css: {'input': {
           maxWidth: 64,
@@ -411,7 +411,7 @@ wru.test([
     name: 'sum between inputs',
     test: function () {
       var SumOfTwo = DOMClass({
-        'with': Bindings,
+        'with': DOMClass.bindings,
         template: '<input data-bind="value:a" type="number">' +
                   '<input data-bind="value:b" type="number">' +
                   '<input data-bind="value:sum(a, b)">' +

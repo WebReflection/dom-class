@@ -1,4 +1,4 @@
-.PHONY: build duk var node amd size hint clean test web preview pages dependencies
+.PHONY: build duk var demo node amd mixins vitamer vitamer-qr vitamer-mixins vitamer-mixins-qr size hint clean test web preview pages dependencies
 
 # repository name
 REPO = dom-class
@@ -25,14 +25,17 @@ VITAMER =	src/ie-lte-9.js \
 build:
 	make clean
 	make var
-	make vitamer
-	make vitamer-qr
 	make node
 	make amd
 	make mixins
+	make vitamer
+	make vitamer-qr
+	make vitamer-mixins
+	make vitamer-mixins-qr
 	make test
 	make hint
 	make size
+	make demo
 
 # build generic version
 var:
@@ -48,8 +51,9 @@ var:
 mixins:
 	node node_modules/uglify-js/bin/uglifyjs --verbose src/Data.js >build/no-copy.data.js
 	node node_modules/uglify-js/bin/uglifyjs --verbose src/Bindings.js >build/no-copy.bindings.js
-	cat template/copyright build/no-copy.data.js >build/dom-class-data.js
-	cat template/copyright build/no-copy.bindings.js >build/dom-class-bindings.js
+	cat template/copyright build/no-copy.data.js >build/dom-class-mixins.js
+	echo '' >>build/dom-class-mixins.js
+	cat build/no-copy.bindings.js >>build/dom-class-mixins.js
 	rm build/no-copy*
 
 vitamer:
@@ -75,6 +79,20 @@ vitamer-qr:
 	rm build/no-copy.$(REPO).max.js
 	rm build/no-copy.$(REPO).js
 	rm build/vitamer.cr.js
+
+vitamer-mixins:
+	mkdir -p build
+	cat build/vitamer.js >build/vitamer-mixins.js
+	node -e 'var fs=require("fs");fs.writeFileSync("build/no-copy.dom-class-mixins.js",fs.readFileSync("build/dom-class-mixins.js").toString().replace(/\/\*\!.+?\*\//g,""));'
+	cat build/no-copy.dom-class-mixins.js >>build/vitamer-mixins.js
+	rm build/no-copy*.js
+
+vitamer-mixins-qr:
+	mkdir -p build
+	cat build/vitamer-qr.js >build/vitamer-mixins-qr.js
+	node -e 'var fs=require("fs");fs.writeFileSync("build/no-copy.dom-class-mixins.js",fs.readFileSync("build/dom-class-mixins.js").toString().replace(/\/\*\!.+?\*\//g,""));'
+	cat build/no-copy.dom-class-mixins.js >>build/vitamer-mixins-qr.js
+	rm build/no-copy*.js
 
 # build node.js version
 node:
@@ -113,6 +131,7 @@ size:
 # hint built file
 hint:
 	node node_modules/jshint/bin/jshint build/$(REPO).max.js
+	node node_modules/jshint/bin/jshint src/Data.js
 	node node_modules/jshint/bin/jshint src/Bindings.js
 
 # clean/remove build folder
@@ -122,6 +141,9 @@ clean:
 # tests, as usual and of course
 test:
 	npm test
+
+demo:
+	cp build/vitamer-mixins.js demo/
 
 # launch tiny-cdn (ctrl+click to open the page)
 web:
