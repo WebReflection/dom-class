@@ -407,5 +407,25 @@ wru.test([
       c2f.updateTemperature('celsius', 30);
 
     }
+  }, {
+    name: 'sum between inputs',
+    test: function () {
+      var SumOfTwo = DOMClass({
+        'with': Bindings,
+        template: '<input data-bind="value:a" type="number">' +
+                  '<input data-bind="value:b" type="number">' +
+                  '<input data-bind="value:sum(a, b)">' +
+                  '<br/>' +
+                  'The sum of {{a}} + {{b}} is equal to {{sum(a, b)}}',
+        bindings: {a: 0, b: 0, sum: function (a, b) {
+          var result = parseFloat(a) + parseFloat(b);
+          return isNaN(result) ? '?' : result;
+        }}
+      });
+      window.sot = document.body.insertBefore(
+        new SumOfTwo,
+        document.body.firstChild
+      );
+    }
   }
 ]);

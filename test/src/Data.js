@@ -1,6 +1,7 @@
-// Mixin Example - better than dataset
-var Data = {
+var Data = Data || {
+
   /*! (C) 2015 Andrea Giammarchi - Mit Style License */
+
   data: function data(key, value) {
     var v, k = 'data-dom-class-' + String(key).replace(
       /([a-z])([A-Z])/g,
@@ -20,26 +21,3 @@ var Data = {
     }
   }
 };
-
-/*
-
-// test it for real
-var EDiv = new DOMClass({
-  with: Data,
-  name: 'e-div',
-  css: {'': {display: 'block'}},
-  onChanged: function () {
-    console.log(arguments);
-  }
-});
-
-var ediv = document.body.appendChild(new EDiv);
-
-ediv.data('name', 'Andrea');
-ediv.data('age', 37);
-ediv.data('info', {
-  currentCity: 'London',
-  sports: ['Snowboarding', 'Skydiving']
-});
-
-//*/
