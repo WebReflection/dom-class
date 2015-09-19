@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Vitamer Mixins Demo</title>
+    <meta http-equiv="content-language" content="en-US"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+    <style>
+    html {
+      font-family: sans-serif;
+    }
+    </style>
+    <script src="vitamer-mixins.js"></script>
+    <script src="x-greeter.js"></script>
+    <script>
+    this.onload = function () {
+
+      this.xGreeter = document.body.appendChild(
+        new XGreeter()
+      );
+      // try the following:
+      //  xGreeter.bindings.bold = true;
+      //  xGreeter.bindings.selectedIndex = 2;
+      //  xGreeter.query('input').checked = false;
+      //  xGreeter.query('select').selectedIndex = 5;
+
+    };
+    </script>
+  </head>
+  <body></body>
+</html>
