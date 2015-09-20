@@ -104,7 +104,7 @@ var XGreeter = DOMClass({
   // it will be used to debounce multiple calls.
   // If it's value is 0 it will assume ASAP invocation
   // and it will use requestAnimationFrame
-  dispatchBindings: true,
+  dispatchBindings: false,
 
   // it will be invoked per each new instance
   constructor: function () {
