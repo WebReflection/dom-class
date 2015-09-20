@@ -180,6 +180,8 @@ pages:
 	git add .gitignore
 	git add test
 	git add test/.
+	git add demo
+	git add demo/.
 	git commit -m 'automatic test generator'
 	git push
 	git checkout master
