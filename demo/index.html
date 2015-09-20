@@ -2,26 +2,107 @@
 <html>
   <head>
     <title>Vitamer Mixins Demo</title>
+    <meta http-equiv=content-type content="text/html; charset=utf-8">
     <meta http-equiv="content-language" content="en-US"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
     <style>
+
     html {
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
       font-family: sans-serif;
+    }
+
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+
+    .fake-twitter {
+      margin: 32px 0;
+      overflow: auto;
+      max-height: 200px;
+      max-width: 560px;
+      border-top: 2px solid silver;
+      border-bottom: 2px solid silver;
     }
     </style>
     <script src="vitamer-mixins.js"></script>
     <script src="x-greeter.js"></script>
+    <script src="input-mirror.js"></script>
+    <script src="celsius-to-fahrenheit-input.js"></script>
+    <script src="random-avatar.js"></script>
+    <script src="fake-tweet.js"></script>
     <script>
     this.onload = function () {
 
-      this.xGreeter = document.body.appendChild(
-        new XGreeter()
-      );
       // try the following:
       //  xGreeter.bindings.bold = true;
       //  xGreeter.bindings.selectedIndex = 2;
       //  xGreeter.query('input').checked = false;
       //  xGreeter.query('select').selectedIndex = 5;
+      this.xGreeter = document.body.appendChild(
+        new XGreeter()
+      );
+
+
+      // write anything you want and see it on its right
+      // it is also possible to ochange its value directly
+      // document.query('[placeholder="mirror"]').value = 123;
+      this.inputMirror = document.body.appendChild(
+        new InputMirror()
+      );
+
+
+      // dual way binding, each time one of these two inputs
+      // gets updates via user interactions, the other one will update
+      this.celsiusToFahrenheitInput = document.body.appendChild(
+        new CelsiusToFahrenheitInput()
+      );
+      // If we access directly the bindings:
+      // this.celsiusToFahrenheitInput.bindings.celsius = 32;
+      // this.celsiusToFahrenheitInput.bindings.fahrenheit = 32;
+      // we will update only the one related bound input at time.
+      // To see the dual way we need to trigger an input change.
+      // There are 2 ways of doing this:
+      //  - use provided utilities to update both fields
+      //   celsiusToFahrenheitInput.setCelsius(32);
+      //   celsiusToFahrenheitInput.setFahrenheit(32);
+      //
+      //  - use DOM way to update fields and dispatch
+      //   // to trigger celsius input and update fahrenheit
+      //   celsiusToFahrenheitInput.query('[name="celsius"]').value 32;
+      //   celsiusToFahrenheitInput.query('[name="celsius"]')
+      //    .dispatchEvent(new CustomEvent('input', {bubbles: true}));
+      //   // to trigger fahrenheit input and update celsius
+      //   celsiusToFahrenheitInput.query('[name="fahrenheit"]').value 32;
+      //   celsiusToFahrenheitInput.query('[name="fahrenheit"]')
+      //    .dispatchEvent(new CustomEvent('input', {bubbles: true}));
+
+
+      (function () {
+        function generateText(numOfChars) {
+          for (var a = [], i = 0; i < numOfChars; i++) {
+            a[i] = i % 23 ? 18 + random() * 110 | 0 : 32;
+          }
+          return String.fromCharCode.apply(String, a);
+        }
+        var random = Math.random;
+        var fakeTwitter = document.body.appendChild(
+          document.createElement('div')
+        );
+        fakeTwitter.classList.add('fake-twitter');
+        for (var i = 0, f = document.createDocumentFragment(); i < 100; i++) {
+          f.appendChild(new FakeTweet({
+            name: generateText(23),
+            handler: generateText(12),
+            time: (random() * 50 | 0) + 'm',
+            content: generateText(10 + random() * 130 | 0)
+          }));
+        }
+        fakeTwitter.appendChild(f);
+      }());
+
 
     };
     </script>

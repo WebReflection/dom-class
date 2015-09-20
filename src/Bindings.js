@@ -115,7 +115,7 @@ Object.defineProperty(DOMClass, 'bindings', {
         function get() { return node.nodeValue; },
         function set(value) {
           node.nodeValue = value;
-          if (setter) setter(value);
+          if (setter) setter.call(bindings, value);
         }
       ));
       return node;
@@ -149,20 +149,19 @@ Object.defineProperty(DOMClass, 'bindings', {
       var
         autobots = this.autobots,
         bindings = this.bindings,
+        source = this.source,
         method = this.method,
         onUpdate = this.onUpdate,
-        has = hOP.call(bindings, key),
-        descriptor = has && gOPD(bindings, key),
-        getter = has && descriptor.get,
-        setter = has && descriptor.set
+        setter = setGetSetIfAvailable(bindings, source, key).set,
+        invoke = !!setter
       ;
-      autobots[key] = this.source[key];
+      autobots[key] = source[key];
       dP(bindings, key, createGetSet(
-        has ? getter : function get() { return autobots[key]; },
+        function get() { return autobots[key]; },
         function set(value) {
           autobots[key] = value;
           onUpdate(method.apply(bindings, getArgs.apply(autobots, args)));
-          if (has) setter(value);
+          if (invoke) setter.call(bindings, value);
         }
       ));
       onUpdate(method.apply(bindings, getArgs.apply(autobots, args)));
@@ -203,6 +202,19 @@ Object.defineProperty(DOMClass, 'bindings', {
         writable: false,
         value: bindings
       });
+    }
+
+    function setGetSetIfAvailable(target, source, key) {
+      var descriptor;
+      if (hOP.call(target, key)) {
+        descriptor = gOPD(target, key);
+      } else {
+        descriptor = gOPD(source, key) || whatToObserve;
+        if (descriptor.set) {
+          dP(target, key, descriptor);
+        }
+      }
+      return descriptor;
     }
 
     return {
@@ -357,15 +369,20 @@ Object.defineProperty(DOMClass, 'bindings', {
               // unless we are at the end of the list
               if (i < bound.length) {
                 k = trim.call(bound[i]);
-                parentNode.append(
-                  (m = decepticons.exec(k)) ?
+                if ((m = decepticons.exec(k))) {
+                  parentNode.append(
                     boundTransformer(
                       bindings, autobots, values, m[1], m[2], document.createTextNode('')
-                    ) :
+                    )
+                  );
+                } else {
+                  setGetSetIfAvailable(values, bindings, k);
+                  parentNode.append(
                     boundTextNode(
                       values, k, document.createTextNode(bindings[k] || '')
                     )
-                );
+                  );
+                }
               }
             });
           }
@@ -407,9 +424,7 @@ Object.defineProperty(DOMClass, 'bindings', {
               key = pair[0],
               // and eventually the corresponding property name on the binding
               value = pair[1] || key,
-              // we also need to know if somehow this property is already processed
-              hasSet = hOP.call(values, value),
-              // and if it's one of those magic one
+              // is this property is one of those "magic" properties ?
               // (value for inputs, selectedIndex for selects, checked for checkbox, etc)
               direct = key in el,
               m = pair[1] && decepticons.exec(value),
@@ -418,7 +433,8 @@ Object.defineProperty(DOMClass, 'bindings', {
               descriptor,
               onAttached,
               onDetached,
-              v, args
+              hasSet,
+              v
             ;
 
             // one way binding, the attribute does not trigger changes in values
@@ -436,8 +452,10 @@ Object.defineProperty(DOMClass, 'bindings', {
             } else {
               // handy to bring back property name from an attribute one
               map[key] = value;
-              // in case processed, we need to keep that "in mind"
-              if (hasSet) setter = gOPD(values, value).set;
+              // if value has already a setter, don't loose it in the process
+              setter = setGetSetIfAvailable(values, bindings, value).set;
+              // in case there is a setter, we need to keep that "in mind"
+              hasSet = !!setter;
               // if it's a direct property ...
               if (direct) {
                 // we can simply set it as such using provided defaults
@@ -461,7 +479,7 @@ Object.defineProperty(DOMClass, 'bindings', {
                     }
                     // if there was already a setter
                     // we should probably invoke it
-                    if (hasSet) setter(v);
+                    if (hasSet) setter.call(values, v);
                     state = previous;
                   }
                 ));
@@ -582,7 +600,7 @@ Object.defineProperty(DOMClass, 'bindings', {
                     }
                     // here again, if there was already a setter
                     // we should probably invoke it
-                    if (hasSet) setter(v);
+                    if (hasSet) setter.call(values, v);
                     state = previous;
                   }
                 ));
