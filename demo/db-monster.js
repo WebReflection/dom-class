@@ -1,8 +1,12 @@
 var DBMonster = DOMClass({
   name: 'dm-monster',
   'extends': HTMLTableElement,
+  'with': DOMClass.bindings,
   'static': {
-
+    // each Custom Element row of the bench (200 Row components per benchmark)
+    // it binds 2 properties and 1 attribute resolved via callback
+    // it binds 2 properties and 1 invoke per each query result
+    // total of 12 bindings (properties) with 2 bound call (resolved via methods)
     Row: DOMClass({
       name: 'dm-monster-row',
       'extends': HTMLTableRowElement,
@@ -40,7 +44,8 @@ var DBMonster = DOMClass({
         qr.update(this[i]);
       }
     }),
-
+    // last 5 Custom Elements per each Row (1000 QueryResult components per benchmark)
+    // each TD binds 1 property and 1 invoke through the elapsed property
     QueryResult: DOMClass({
       name: 'dm-monster-query-cell',
       'extends': HTMLTableCellElement,
@@ -69,8 +74,12 @@ var DBMonster = DOMClass({
       }
     })
   },
-
-  'with': DOMClass.bindings,
+  // the DBMonster Custom Element benchmark.
+  //  total amount of benchmark Custom Elements per instance: 1201
+  //  total amount of benchmark bindings per instance: 2400
+  //  total amount of bound invokes per instance: 1000
+  //  will it perform? Hell YEAH!
+  //    http://webreflection.github.io/dom-class/demo/dbmonster.html
   constructor: function (dbs) {
     this.className = 'table table-striped latest-data';
     dbs.forEach(function (db) {
@@ -78,7 +87,8 @@ var DBMonster = DOMClass({
     }, this.appendChild(document.createElement('tbody')));
   },
   update: function (dbs) {
-    [].forEach.call(this.firstChild.children, this.subUpdate, dbs);
+    Array.prototype.forEach.call(
+      this.firstChild.children, this.subUpdate, dbs);
   },
   subUpdate: function (row, i) {
     row.update(this[i]);
