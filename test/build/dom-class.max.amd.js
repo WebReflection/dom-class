@@ -21,7 +21,7 @@ THE SOFTWARE.
 
 */
 define(['es-class', 'restyle'], function (Class, restyle) {
-var DOMClass = (function (A, O) {'use strict';
+var DOMClass = (function (g, A, O) {'use strict';
   var
     ATTACHED = 'onAttached',
     ATTACHED_CALLBACK = 'attachedCallback',
@@ -54,6 +54,9 @@ var DOMClass = (function (A, O) {'use strict';
     },
     gOPS = O.getOwnPropertySymbols || function () {
       return empty;
+    },
+    getHTMLConstructor = function (name) {
+      return g['HTML' + name + 'Element'];
     },
     gOK = function (obj) {
       return gOPS(obj).concat(gOPN(obj));
@@ -123,7 +126,7 @@ var DOMClass = (function (A, O) {'use strict';
       createdCallback = init && description[CONSTRUCTOR],
       Element,
       constructor,
-      key
+      key, proto, nodeName
     ;
     setIfThere(description, ATTACHED, el, ATTACHED_CALLBACK);
     setIfThere(description, CHANGED, el, CHANGED_CALLBACK);
@@ -149,6 +152,62 @@ var DOMClass = (function (A, O) {'use strict';
       description[EXTENDS].prototype :
       HTMLElement.prototype
     ;
+    if (el[EXTENDS] instanceof HTMLElement) {
+      // dumbest thing I've possibly ever written, right here!
+      //  Object.getOwnPropertyNames(this).filter((k) => {return k.slice(0, 4)==='HTML'}).map((k)=>{return k.slice(4, -7)}).sort();
+      //  ["", "AllCol", "Anchor", "Applet", "Area", "Audio", "BR", "Base", "Body", "Button", "Canvas", "Col", "Content",
+      //  "D", "DList", "DataList", "Details", "Dialog", "Directory", "Div", "Embed", "FieldSet", "Font", "Form", "FormControlsCol",
+      //  "Frame", "FrameSet", "HR", "Head", "Heading", "Html", "IFrame", "Image", "Input", "Keygen", "LI", "Label", "Legend",
+      //  "Link", "Map", "Marquee", "Media", "Menu", "Meta", "Meter", "Mod", "OList", "Object", "OptGroup", "Option", "OptionsCol",
+      //  "Output", "Paragraph", "Param", "Picture", "Pre", "Progress", "Quote", "Script", "Select", "Shadow", "Source", "Span",
+      //  "Style", "Table", "TableCaption", "TableCell", "TableCol", "TableRow", "TableSection", "Template", "TextArea", "Title",
+      //  "Track", "UList", "Unknown", "Video"]
+      // but I'll enable only most common one ... please file a bug if you need others
+      // also, if you know a way to retrieve a nodeName via its constructor please shout it to me!
+      switch (description[EXTENDS]) {
+        case getHTMLConstructor('Anchor'): nodeName = 'a'; break;
+        case getHTMLConstructor('Audio'): nodeName = 'audio'; break;
+        case getHTMLConstructor('BR'): nodeName = 'br'; break;
+        case getHTMLConstructor('Body'): nodeName = 'body'; break;
+        case getHTMLConstructor('Button'): nodeName = 'button'; break;
+        case getHTMLConstructor('Canvas'): nodeName = 'canvas'; break;
+        case getHTMLConstructor('Col'): nodeName = 'col'; break;
+        case getHTMLConstructor('DataList'): nodeName = 'dl'; break;
+        case getHTMLConstructor('Div'): nodeName = 'div'; break;
+        case getHTMLConstructor('Form'): nodeName = 'form'; break;
+        case getHTMLConstructor('HR'): nodeName = 'hr'; break;
+        case getHTMLConstructor('Head'): nodeName = 'head'; break;
+        case getHTMLConstructor('IFrame'): nodeName = 'iframe'; break;
+        case getHTMLConstructor('Image'): nodeName = 'img'; break;
+        case getHTMLConstructor('Input'): nodeName = 'input'; break;
+        case getHTMLConstructor('LI'): nodeName = 'li'; break;
+        case getHTMLConstructor('Label'): nodeName = 'label'; break;
+        case getHTMLConstructor('Legend'): nodeName = 'legend'; break;
+        case getHTMLConstructor('Link'): nodeName = 'link'; break;
+        case getHTMLConstructor('Menu'): nodeName = 'menu'; break;
+        case getHTMLConstructor('OList'): nodeName = 'ol'; break;
+        case getHTMLConstructor('Option'): nodeName = 'option'; break;
+        case getHTMLConstructor('Paragraph'): nodeName = 'p'; break;
+        case getHTMLConstructor('Progress'): nodeName = 'progress'; break;
+        case getHTMLConstructor('Quote'): nodeName = 'quote'; break;
+        case getHTMLConstructor('Select'): nodeName = 'select'; break;
+        case getHTMLConstructor('Span'): nodeName = 'span'; break;
+        case getHTMLConstructor('Style'): nodeName = 'style'; break;
+        case getHTMLConstructor('Table'): nodeName = 'table'; break;
+        case getHTMLConstructor('TableCaption'): nodeName = 'caption'; break;
+        case getHTMLConstructor('TableCell'): nodeName = 'td'; break;
+        case getHTMLConstructor('TableCol'): nodeName = 'colgroup'; break;
+        case getHTMLConstructor('TableRow'): nodeName = 'tr'; break;
+        case getHTMLConstructor('TableSection'): nodeName = 'tbody'; break;
+        case getHTMLConstructor('Table'): nodeName = 'table'; break;
+        case getHTMLConstructor('Table'): nodeName = 'table'; break;
+        case getHTMLConstructor('TextArea'): nodeName = 'textarea'; break;
+        case getHTMLConstructor('Track'): nodeName = 'track'; break;
+        case getHTMLConstructor('UList'): nodeName = 'ul'; break;
+        case getHTMLConstructor('Video'): nodeName = 'video'; break;
+        // GZIP ALL THE THINGS!
+      }
+    }
     key = hOP.call(description, NAME) ? description[NAME] : ('x-dom-class-' + i++);
     if (css) el[STYLE] = restyle(key, description[CSS]);
     el[CONSTRUCTOR_CALLBACK] = function () {
@@ -159,11 +218,15 @@ var DOMClass = (function (A, O) {'use strict';
     };
     constructor = new Class(el);
     copyOwn(constructor, CustomElement);
-    Element = document.registerElement(key, {prototype: constructor.prototype});
+    proto = {prototype: constructor.prototype};
+    // if we are extending an HTML element
+    // we should retrieve a name and an `is` property
+    if (nodeName) proto[EXTENDS] = nodeName;
+    Element = document.registerElement(key, proto);
     CustomElement.prototype = Element.prototype;
     dP(Element.prototype, CONSTRUCTOR, {value: CustomElement});
     return CustomElement;
   };
-}(Array, Object));
+}(this.window || global, Array, Object));
 return DOMClass;
 });
