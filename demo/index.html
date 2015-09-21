@@ -86,7 +86,8 @@
       // portion of html can be bound too
       // use {{{propName}}} within triple stache
       // try:
-      //  htmlBinding.bindings.html = 'something <small>else</small>!';
+      //  htmlBinding.bindings.text = 'plain text';
+      //  htmlBinding.bindings.html = 'some <strong>html</strong>!';
       this.htmlBinding = document.body.appendChild(
         new HtmlBinding()
       );

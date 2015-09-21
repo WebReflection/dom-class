@@ -110,7 +110,7 @@ Object.defineProperty(DOMClass, 'bindings', {
       ));
     }
 
-    // if there's some binding in the wild, like inside
+    // if there's some textual binding in the wild, like inside
     // a generic node, it will be bound "one way" here
     function boundTextNode(bindings, key, node) {
       var setter = hOP.call(bindings, key) && gOPD(bindings, key).set;
@@ -124,6 +124,27 @@ Object.defineProperty(DOMClass, 'bindings', {
       return node;
     }
 
+    // if there's some HTML binding in the wild, like inside
+    // a generic node, it will be bound "one way" here
+    function boundFragmentNode(bindings, key, document, innerHTML) {
+      var
+        setter = hOP.call(bindings, key) && gOPD(bindings, key).set,
+        pins = createFragment(document, innerHTML)
+      ;
+      dP(bindings, key, createGetSet(
+        function get() { return innerHTML; },
+        function set(value) {
+          pins = updatePins(document, pins, innerHTML = value);
+          if (setter) setter.call(bindings, value);
+        }
+      ));
+      return pins.fragment;
+    }
+
+    // create a documentFragment adding before and after
+    // two comments node. There are immune to styles
+    // but these are also nodes so it's possible later on
+    // to replace the fragment within these comments ;-)
     function createFragment(document, innerHTML) {
       var pins, firstChild;
       dummy.innerHTML = '<!---->' + innerHTML + '<!---->';
@@ -137,48 +158,47 @@ Object.defineProperty(DOMClass, 'bindings', {
       return pins;
     }
 
-    function boundFragmentNode(bindings, key, document, innerHTML) {
+    // used to replace previous fragment
+    // will create a new "pins" object with
+    // comments boundaries and the fragment
+    function updatePins(document, pins, html) {
       var
-        setter = hOP.call(bindings, key) && gOPD(bindings, key).set,
-        pins = createFragment(document, innerHTML),
         start = pins.start,
-        fragment = pins.fragment
+        parentNode = start.parentNode,
+        nextSibling
       ;
-      pins.fragment = null;
-      dP(bindings, key, createGetSet(
-        function get() { return innerHTML; },
-        function set(value) {
-          var parentNode = start.parentNode, nextSibling;
-          do {
-            nextSibling = start.nextSibling;
-            parentNode.removeChild(nextSibling);
-          } while (nextSibling !== pins.end);
-          pins = createFragment(document, (innerHTML = value));
-          parentNode.replaceChild(
-            pins.fragment,
-            start
-          );
-          start = pins.start;
-          pins.fragment = null;
-          if (setter) setter.call(bindings, value);
-        }
-      ));
-      return fragment;
+      do {
+        nextSibling = start.nextSibling;
+        parentNode.removeChild(nextSibling);
+      } while (nextSibling !== pins.end);
+      pins = createFragment(document, html);
+      parentNode.replaceChild(pins.fragment, start);
+      return pins;
     }
 
     // if there's some binding dependent to a method it will update
     // the node whenever one bound parameter of the method changes
-    function boundTransformer(source, autobots, bindings, method, keys, node) {
+    function boundTransformer(source, autobots, bindings, method, keys, document, isHTML) {
+      var
+        pins = null,
+        node = isHTML ? null : document.createTextNode('')
+      ;
       keys.split(comma).forEach(optimusPrime, {
         autobots: autobots,
         bindings: bindings,
         method: source[method],
         source: source,
-        onUpdate: function (value) {
-          node.nodeValue = value;
-        }
+        onUpdate: isHTML ?
+          function (value) {
+            pins = pins ?
+              updatePins(document, pins, value) :
+              createFragment(document, value);
+          } :
+          function (value) {
+            node.nodeValue = value;
+          }
       });
-      return node;
+      return node || pins.fragment;
     }
 
     // from a list of property names, returns an Array of values
@@ -249,6 +269,10 @@ Object.defineProperty(DOMClass, 'bindings', {
       });
     }
 
+    // if the source had a getter/setter and
+    // the target hasn't one descriptor yet
+    // will copy such descriptor to not loose it
+    // once it's re-configured
     function setGetSetIfAvailable(target, source, key) {
       var descriptor;
       if (hOP.call(target, key)) {
@@ -416,17 +440,16 @@ Object.defineProperty(DOMClass, 'bindings', {
               // unless we are at the end of the list
               if (i < bound.length) {
                 k = trim.call(bound[i]);
+                // check if this is an HTML intent
+                isHTML = oneWayHTML.test(k);
+                  if (isHTML) k = k.slice(1, -1);
                 if ((m = decepticons.exec(k))) {
-                  // TODO: boundHTMLTransformer ?
                   parentNode.append(
                     boundTransformer(
-                      bindings, autobots, values, m[1], m[2], document.createTextNode('')
+                      bindings, autobots, values, m[1], m[2], document, isHTML
                     )
                   );
                 } else {
-                  // check if this is an HTML intent
-                  isHTML = oneWayHTML.test(k);
-                  if (isHTML) k = k.slice(1, -1);
                   setGetSetIfAvailable(values, bindings, k);
                   parentNode.append(isHTML ?
                     boundFragmentNode(
