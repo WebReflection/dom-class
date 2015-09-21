@@ -35,6 +35,7 @@
     <script src="celsius-to-fahrenheit-input.js"></script>
     <script src="random-avatar.js"></script>
     <script src="fake-tweet.js"></script>
+    <script src="html-binding.js"></script>
     <script>
     this.onload = function () {
 
@@ -80,6 +81,15 @@
       //   celsiusToFahrenheitInput.query('[name="fahrenheit"]').value 32;
       //   celsiusToFahrenheitInput.query('[name="fahrenheit"]')
       //    .dispatchEvent(new CustomEvent('input', {bubbles: true}));
+
+
+      // portion of html can be bound too
+      // use {{{propName}}} within triple stache
+      // try:
+      //  htmlBinding.bindings.html = 'something <small>else</small>!';
+      this.htmlBinding = document.body.appendChild(
+        new HtmlBinding()
+      );
 
 
       (function () {

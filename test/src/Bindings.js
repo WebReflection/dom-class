@@ -28,13 +28,16 @@ Object.defineProperty(DOMClass, 'bindings', {
       gOPD = O.getOwnPropertyDescriptor,
       // RegExp used all the time
       ignore = /IFRAME|NOFRAMES|NOSCRIPT|SCRIPT|SELECT|STYLE|TEXTAREA|[a-z]/,
-      oneWay = /\{\{[\S\s]+?\}\}/g,
+      oneWay = /\{\{\{?[\S\s]+?\}\}\}?/g,
+      oneWayHTML = /^\{[\S\s]+?\}$/,
       comma = /\s*,\s*/,
       colon = /\s*:\s*/,
       spaces = /^\s+|\s+$/g,
       decepticons = /^([\S]+?)\(([\S\s]*?)\)/,
       // MutationObserver common options
       whatToObserve = {attributes: true, subtree: true},
+      // used to create HTML
+      dummy = document.createElement('dummy'),
       // moar shortcuts
       hOP = whatToObserve.hasOwnProperty,
       on = function (el, type, handler) {
@@ -119,6 +122,48 @@ Object.defineProperty(DOMClass, 'bindings', {
         }
       ));
       return node;
+    }
+
+    function createFragment(document, innerHTML) {
+      var pins, firstChild;
+      dummy.innerHTML = '<!---->' + innerHTML + '<!---->';
+      pins = {
+        start: dummy.firstChild,
+        end: dummy.lastChild,
+        fragment: document.createDocumentFragment()
+      };
+      while ((firstChild = dummy.firstChild))
+        pins.fragment.appendChild(firstChild);
+      return pins;
+    }
+
+    function boundFragmentNode(bindings, key, document, innerHTML) {
+      var
+        setter = hOP.call(bindings, key) && gOPD(bindings, key).set,
+        pins = createFragment(document, innerHTML),
+        start = pins.start,
+        fragment = pins.fragment
+      ;
+      pins.fragment = null;
+      dP(bindings, key, createGetSet(
+        function get() { return innerHTML; },
+        function set(value) {
+          var parentNode = start.parentNode, nextSibling;
+          do {
+            nextSibling = start.nextSibling;
+            parentNode.removeChild(nextSibling);
+          } while (nextSibling !== pins.end);
+          pins = createFragment(document, (innerHTML = value));
+          parentNode.replaceChild(
+            pins.fragment,
+            start
+          );
+          start = pins.start;
+          pins.fragment = null;
+          if (setter) setter.call(bindings, value);
+        }
+      ));
+      return fragment;
     }
 
     // if there's some binding dependent to a method it will update
@@ -341,7 +386,9 @@ Object.defineProperty(DOMClass, 'bindings', {
         // loop over all text nodes
         textNodes.forEach(function (node) {
           var
-            k, m, j, l, i = 0,
+            isHTML,
+            k, m, j, l,
+            i = 0,
             value = node.nodeValue,
             nodes = [],
             bound = [],
@@ -370,16 +417,26 @@ Object.defineProperty(DOMClass, 'bindings', {
               if (i < bound.length) {
                 k = trim.call(bound[i]);
                 if ((m = decepticons.exec(k))) {
+                  // TODO: boundHTMLTransformer ?
                   parentNode.append(
                     boundTransformer(
                       bindings, autobots, values, m[1], m[2], document.createTextNode('')
                     )
                   );
                 } else {
+                  // check if this is an HTML intent
+                  isHTML = oneWayHTML.test(k);
+                  if (isHTML) k = k.slice(1, -1);
                   setGetSetIfAvailable(values, bindings, k);
-                  parentNode.append(
+                  parentNode.append(isHTML ?
+                    boundFragmentNode(
+                      values, k,
+                      document,
+                      bindings[k] || ''
+                    ) :
                     boundTextNode(
-                      values, k, document.createTextNode(bindings[k] || '')
+                      values, k,
+                      document.createTextNode(bindings[k] || '')
                     )
                   );
                 }
