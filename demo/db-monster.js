@@ -30,15 +30,10 @@ var DBMonster = DOMClass({
         }, this);
       },
       update: function (db) {
-        var info = this.bindings;
-        info.db = db;
-        if (info.name != db.name) {
-          info.name = db.name;
-          this.setAttribute('key', info.name);
-        }
-        if (info.count != db.queries.length) {
-          info.count = db.queries.length;
-        }
+        this.bindings.db = db;
+        this.bindings.name = db.name;
+        this.bindings.count = db.queries.length;
+        this.setAttribute('key', db.name);
         this.queryResults.forEach(this.subUpdate, db.topFiveQueries);
       },
       subUpdate: function (qr, i) {
@@ -62,24 +57,15 @@ var DBMonster = DOMClass({
           bindings: {
             elapsed: query.elapsed,
             query: query.query,
-            formatElapsed: formatElapsed,
-            elapsedClassName: function (elapsed) {
-              return 'Query ' + elapsedClassName(elapsed);
-            }
+            formatElapsed: formatElapsed
           }
         });
-        this.className = this.bindings.elapsedClassName(query.elapsed);
+        this.className = elapsedClassName(query.elapsed);
       },
       update: function (query) {
-        var info = this.bindings;
-        if (info.elapsed != query.elapsed) {
-          this.className = this.bindings.elapsedClassName((
-            info.elapsed = query.elapsed
-          ));
-        }
-        if (info.query != query.query) {
-          info.query = query.query;
-        }
+        this.bindings.query = query.query;
+        this.bindings.elapsed = query.elapsed;
+        this.className = elapsedClassName(query.elapsed);
       }
     })
   },
