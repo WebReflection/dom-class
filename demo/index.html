@@ -117,6 +117,16 @@
       }());
 
 
+      // just an input
+      var MyInput = DOMClass({
+        extends: HTMLInputElement,
+        // just for demo purpose
+        constructor: function (value) {
+          this.value = value;
+        }
+      });
+      document.body.appendChild(new MyInput('The End'));
+
     };
     </script>
   </head>
