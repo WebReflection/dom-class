@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DBMonster via DOMClass &amp; bindings Mixin</title>
+  <meta http-equiv=content-type content="text/html; charset=utf-8">
+  <meta http-equiv="content-language" content="en-US"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="dbmonster.style.css">
+  <script src="vitamer-mixins.js"></script>
+  <script src="db-monster.js"></script>
+  <script src="data.js"></script>
+</head>
+<body>
+<div id="link">
+  You're looking at DOMClass &amp; DOMClass.bindings<br>
+  version of <a href="https://dbmonster.firebaseapp.com/">DBMonster</a>.
+  Compare with <a href="http://webreflection.github.io/dbmonster/">pure DOM</a>.
+</div>
+<div id="body"></div>
+<script>
+this.onload = function () {
+  this.dbm = document.query('#body').appendChild(
+    new DBMonster(getData())
+  );
+  // ... and update its content ASAP
+  requestAnimationFrame(function update() {
+    dbm.update(getData());
+    requestAnimationFrame(update);
+  });
+};
+</script>
+</body>
+</html>

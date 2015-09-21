@@ -130,7 +130,7 @@ size:
 
 # hint built file
 hint:
-	node node_modules/jshint/bin/jshint build/$(REPO).max.js
+	node node_modules/jshint/bin/jshint src/$(REPO).js
 	node node_modules/jshint/bin/jshint src/Data.js
 	node node_modules/jshint/bin/jshint src/Bindings.js
 
