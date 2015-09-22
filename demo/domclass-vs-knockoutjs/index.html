@@ -62,6 +62,7 @@
   <body>
     <section id="hello-world">
       <h3>Hello World <a title="Knockout version" href="http://knockoutjs.com/examples/helloWorld.html">[↗]</a></h3>
+      Main difference is that DOMClass one changes in real time and not only on <code>change</code> event.
       <script>
       DOMClass({
         name: 'hello-world',
@@ -85,6 +86,8 @@
     </section>
     <section id="click-counter">
       <h3>Click counter <a title="Knockout version" href="http://knockoutjs.com/examples/clickCounter.html">[↗]</a></h3>
+      Main difference is that we use standard events when we need them.
+      This gives us the ability to also drop them eventually in some edge case we might encounter.
       <script>
       DOMClass({
         name: 'click-counter',
