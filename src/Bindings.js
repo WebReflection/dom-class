@@ -40,6 +40,10 @@ Object.defineProperty(DOMClass, 'bindings', {
       dummy = document.createElement('dummy'),
       // moar shortcuts
       hOP = whatToObserve.hasOwnProperty,
+      notNull = function (v, f) {
+        /* jshint eqnull:true */
+        return v == null ? f : v;
+      },
       on = function (el, type, handler) {
         el.addEventListener(type, handler, true);
         //                                  ^ ... but why?
@@ -113,12 +117,12 @@ Object.defineProperty(DOMClass, 'bindings', {
     // if there's some textual binding in the wild, like inside
     // a generic node, it will be bound "one way" here
     function boundTextNode(bindings, key, node) {
-      var setter = hOP.call(bindings, key) && gOPD(bindings, key).set;
+      var value, setter = hOP.call(bindings, key) && gOPD(bindings, key).set;
       dP(bindings, key, createGetSet(
-        function get() { return node.nodeValue; },
-        function set(value) {
-          node.nodeValue = value;
-          if (setter) setter.call(bindings, value);
+        function get() { return value; },
+        function set(v) {
+          node.nodeValue = (value = v);
+          if (setter) setter.call(bindings, v);
         }
       ));
       return node;
@@ -134,7 +138,7 @@ Object.defineProperty(DOMClass, 'bindings', {
       dP(bindings, key, createGetSet(
         function get() { return innerHTML; },
         function set(value) {
-          pins = updatePins(document, pins, innerHTML = value);
+          pins = updatePins(document, pins, (innerHTML = value));
           if (setter) setter.call(bindings, value);
         }
       ));
@@ -455,11 +459,13 @@ Object.defineProperty(DOMClass, 'bindings', {
                     boundFragmentNode(
                       values, k,
                       document,
-                      bindings[k] || ''
+                      notNull(bindings[k], '')
                     ) :
                     boundTextNode(
                       values, k,
-                      document.createTextNode(bindings[k] || '')
+                      document.createTextNode(
+                        notNull(bindings[k], '')
+                      )
                     )
                   );
                 }
