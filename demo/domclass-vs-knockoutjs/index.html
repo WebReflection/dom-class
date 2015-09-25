@@ -115,6 +115,7 @@
           .replace('Planet Earth', '{{join(firstName, lastName)}}')
           .replace('ve clicked 0 times', 've clicked {{clicks}} times')
           .replace('data-arguments="[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;]"', 'data-arguments=\'["Alpha","Beta","Gamma"]\'')
+          .replace('data-arguments="[&quot;Fries&quot;,&quot;Eggs Benedict&quot;,&quot;Ham&quot;,&quot;Cheese&quot;]"', 'data-arguments=\'["Fries","Eggs Benedict","Ham","Cheese"]\'')
         ;
         hljs.highlightBlock(section.lastChild);
       });
@@ -240,6 +241,86 @@
             <p>Your items:</p>
             <select data-bind="options" multiple="multiple" width="50"></select>
           </simple-list>
+        </live-demo>
+      </section>
+      <section>
+        <h3>Better list <a title="Knockout version" href="http://knockoutjs.com/examples/betterList.html">[↗]</a></h3>
+        <p>
+          Same differences described in the simple list plus some extra logic for sorting and removing.
+          Once again, there's no auto-magic behaviors in DOMClass, neither code evaluation.
+          We need to define what happens by ourselves and here that's defined in the <code>handleEvent</code>.
+        </p>
+        <live-demo>
+          <script>
+          var BetterList = DOMClass({
+            name: 'better-list',
+            'with': [DOMClass.bindings],
+            css: {select: {width: '100%'}},
+            bindings: {
+              optionsLength: 0,
+              selected: false,
+              disableAdd: function (name) { return !name; },
+              disableRemove: function (length) { return !length; },
+              disableSort: function (length) { return length < 2; },
+              update: function () {
+                this.optionsLength = this.options.length;
+                this.selected = [].some.call(this.options, function (option) {
+                  return option.selected;
+                });
+              }
+            },
+            constructor: function () {
+              for (var i = 0; i < arguments.length; i++)
+                this.addItem(arguments[i]);
+              this.queryAll('[name="add"],[name="remove"],[name="sort"]').forEach(
+                function (button) { button.addEventListener('click', this); },
+                this
+              );
+              this.query('select').addEventListener('change', this);
+              this.bindings.update();
+            },
+            addItem: function (value) {
+              var option = document.createElement('option');
+              option.value = (option.textContent = value);
+              this.query('select').append(option);
+              this.bindings.update();
+            },
+            handleEvent: function (e) {
+              var node;
+              switch(e.currentTarget.name) {
+                case 'add':
+                  node = this.query('input');
+                  this.addItem(node.value);
+                  node.value = '';
+                  break;
+                case 'remove':
+                  node = this.query('select');
+                  while (-1 < node.selectedIndex)
+                    node.options[node.selectedIndex].remove();
+                  break;
+                case 'sort':
+                  node = this.query('select');
+                  [].map.call(node.options, Object).sort(function (a, b) {
+                    return  a.value.toLowerCase() <
+                            b.value.toLowerCase() ?
+                            -1 : 1;
+                  }).forEach(node.appendChild, node);
+                  break;
+              }
+              this.bindings.update();
+            }
+          });
+          </script>
+          <better-list data-arguments='["Fries","Eggs Benedict","Ham","Cheese"]'>
+            Add item: <input data-bind="value:itemName">
+            <button name="add" data-bind="disabled:disableAdd(itemName)">Add</button>
+            <p>Your values:</p>
+            <select data-bind="options" multiple="multiple" width="50"></select>
+            <div>
+              <button name="remove" data-bind="disabled:disableRemove(selected)">Remove</button>
+              <button name="sort" data-bind="disabled:disableSort(optionsLength)">Sort</button>
+            </div>
+          </better-list>
         </live-demo>
       </section>
     </main>
