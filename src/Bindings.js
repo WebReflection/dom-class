@@ -64,6 +64,12 @@ Object.defineProperty(DOMClass, 'bindings', {
           set: set
         };
       },
+      // if attributes such onchange or others are used
+      directMethod = function (bindings, method) {
+        return typeof method === 'function' ?
+          function () { return method.apply(bindings, arguments); } :
+          method;
+      },
       // given an element and a property
       // with direct info manipulation capability
       // test if there is a descriptor that could be
@@ -532,7 +538,7 @@ Object.defineProperty(DOMClass, 'bindings', {
                 method: bindings[m[1]],
                 source: bindings,
                 onUpdate: direct ?
-                  function (value) { el[key] = value; } :
+                  function (value) { el[key] = directMethod(values, value); } :
                   function (value) { setAttribute.call(el, key, value); }
               });
             } else {
@@ -545,7 +551,8 @@ Object.defineProperty(DOMClass, 'bindings', {
               // if it's a direct property ...
               if (direct) {
                 // we can simply set it as such using provided defaults
-                if (hOP.call(bindings, value)) el[key] = bindings[value];
+                if (hOP.call(bindings, value)) el[key] =
+                  directMethod(values, bindings[value]);
                 // console.log(gOPD(el, 'key'));
                 // whenever we set such property via exported bindings
                 dP(values, value, createGetSet(

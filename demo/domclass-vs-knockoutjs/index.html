@@ -116,6 +116,7 @@
           .replace('ve clicked 0 times', 've clicked {{clicks}} times')
           .replace('data-arguments="[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;]"', 'data-arguments=\'["Alpha","Beta","Gamma"]\'')
           .replace('data-arguments="[&quot;Fries&quot;,&quot;Eggs Benedict&quot;,&quot;Ham&quot;,&quot;Cheese&quot;]"', 'data-arguments=\'["Fries","Eggs Benedict","Ham","Cheese"]\'')
+          .replace('[{&quot;stringValue&quot;:&quot;Hello&quot;,&quot;passwordValue&quot;:&quot;mypass&quot;,&quot;booleanValue&quot;:true,&quot;optionValues&quot;:[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;],&quot;selectedOptionValue&quot;:&quot;Gamma&quot;,&quot;multipleSelectedOptionValues&quot;:[&quot;Alpha&quot;],&quot;radioSelectedOptionValue&quot;:&quot;Beta&quot;}]', '[{"stringValue":"Hello","passwordValue":"mypass","booleanValue":true,"optionValues":["Alpha","Beta","Gamma"],"selectedOptionValue":"Gamma","multipleSelectedOptionValues":["Alpha"],"radioSelectedOptionValue":"Beta"}]')
         ;
         hljs.highlightBlock(section.lastChild);
       });
@@ -319,6 +320,149 @@
               <button name="sort" data-bind="disabled:disableSort(optionsLength)">Sort</button>
             </div>
           </better-list>
+        </live-demo>
+      </section>
+      <section>
+        <h3>Control types <a title="Knockout version" href="http://knockoutjs.com/examples/controlTypes.html">[↗]</a></h3>
+        <p></p>
+        <live-demo>
+          <script>
+          DOMClass({
+            name: 'control-types',
+            css: {
+              '.readout': {float: 'right'},
+              '.readout td': { width: '50%' },
+              'tr': { verticalAlign: 'top' },
+              'td': { padding: '0.2em 0.2em 0.6em 0.2em' },
+              'td.label': { textAlign: 'right', paddingRight: '0.5em' },
+              'input[type=radio]': { margin: '0 0.25em 0 0.25em' }
+            },
+            'with': [DOMClass.bindings],
+            bindings: {
+              selectedIndex: -1,
+              selectedOptions: [],
+              stringValue: '',
+              options: [],
+              getBoolTxt: function (b) { return b ? 'True' : 'False'; },
+              getRadio: function () {
+                return this.options.filter(function (value) {
+                  return this['radio' + value];
+                }, this)[0] || '';
+              },
+              getSingleSelectValue: function (i) {
+                return i < 0 ? '' : this.singleSelectOptions[i].value;
+              },
+              getMultipleSelectValue: function (selectedOptions) {
+                return selectedOptions.join(', ');
+              },
+              on: function (value) {
+                this.changeValue = value;
+                this.keyupValue = value;
+              },
+              updateStringValue: function (e) {
+                this.stringValue = e.target.value;
+              },
+              updateMultiSelect: function (e) {
+                this.selectedOptions = [].map.call(
+                  e.target.selectedOptions,
+                  function (option) { return option.value; }
+                );
+              }
+            },
+            constructor: function (options) {
+              this.bindings.stringValue = options.stringValue || '';
+              this.bindings.passwordValue = options.passwordValue || '';
+              this.bindings.booleanValue = options.booleanValue == null ?
+                true : options.booleanValue;
+              this.bindings.options = options.optionValues;
+              this.bindings['radio' + options.radioSelectedOptionValue] = true;
+              options.optionValues.forEach(function (value, i) {
+                var option = this.appendChild(document.createElement('option'));
+                option.textContent = (option.value = value);
+                if (options.selectedOptionValue === value)
+                  this.selectedIndex = i;
+              }, this.query('select'));
+              options.optionValues.forEach(function (value, i) {
+                var option = this.appendChild(document.createElement('option'));
+                option.textContent = (option.value = value);
+                if (-1 < options.multipleSelectedOptionValues.indexOf(value))
+                  option.selected = true;
+              }, this.query('select[multiple]'));
+              this.bindings.updateMultiSelect({target: this.query('select[multiple]')});
+            }
+          });
+          </script>
+          <control-types data-arguments='[{"stringValue":"Hello","passwordValue":"mypass","booleanValue":true,"optionValues":["Alpha","Beta","Gamma"],"selectedOptionValue":"Gamma","multipleSelectedOptionValues":["Alpha"],"radioSelectedOptionValue":"Beta"}]'>
+            <div class="readout">
+              <h3>What's in the model?</h3>
+              <table>
+                <tr>
+                  <td class="label">Text value:</td>
+                  <td>{{stringValue}}</td>
+                </tr>
+                <tr>
+                  <td class="label">Password:</td>
+                  <td>{{passwordValue}}</td>
+                </tr>
+                <tr>
+                  <td class="label">Bool value:</td>
+                  <td>{{getBoolTxt(booleanValue)}}</td>
+                </tr>
+                <tr>
+                  <td class="label">Selected option:</td>
+                  <td>{{getSingleSelectValue(selectedIndex)}}</td>
+                </tr>
+                <tr>
+                  <td class="label">Multi-selected options:</td>
+                  <td>{{getMultipleSelectValue(selectedOptions)}}</td>
+                </tr>
+                <tr>
+                  <td class="label">Radio button selection:</td>
+                  <td>{{getRadio(radioAlpha,radioBeta,radioGamma)}}</td>
+                </tr>
+              </table>
+            </div>
+
+            <h3>HTML controls</h3>
+            <table>
+              <tr>
+                <td class="label">Text value (updates on change):</td>
+                <td><input data-bind="onchange:updateStringValue,value:changeValue,sync:on(stringValue)"></td>
+              </tr>
+              <tr>
+                <td class="label">Text value (updates on keystroke):</td>
+                <td><input data-bind="onkeyup:updateStringValue,value:keyupValue,sync:on(stringValue)"></td>
+              </tr>
+              <tr>
+                <td class="label">Text value (multi-line):</td>
+                <td><textarea data-bind="value:stringValue,sync:on(stringValue)"></textarea></td>
+              </tr>
+              <tr>
+                <td class="label">Password:</td>
+                <td><input type="password" data-bind="value:passwordValue" /></td>
+              </tr>
+              <tr>
+                <td class="label">Checkbox:</td>
+                <td><input type="checkbox" data-bind="checked:booleanValue" /></td>
+              </tr>
+              <tr>
+                <td class="label">Drop-down list:</td>
+                <td><select data-bind="options:singleSelectOptions,selectedIndex"></select></td>
+              </tr>
+              <tr>
+                <td class="label">Multi-select drop-down list:</td>
+                <td><select multiple="multiple" data-bind="onchange:updateMultiSelect"></select></td>
+              </tr>
+              <tr>
+                <td class="label">Radio buttons:</td>
+                <td>
+                  <label><input name="radio" type="radio" data-bind="checked:radioAlpha" />Alpha</label>
+                  <label><input name="radio" type="radio" data-bind="checked:radioBeta" />Beta</label>
+                  <label><input name="radio" type="radio" data-bind="checked:radioGamma" />Gamma</label>
+                </td>
+              </tr>
+            </table>
+          </control-types>
         </live-demo>
       </section>
     </main>
