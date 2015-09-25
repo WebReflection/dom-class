@@ -5,9 +5,10 @@
     <meta http-equiv=content-type content="text/html; charset=utf-8">
     <meta http-equiv="content-language" content="en-US"/>
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/styles/monokai_sublime.min.css">
     <style>
 
-    html {
+    html, main, live-demo {
       -webkit-box-sizing: border-box;
       -moz-box-sizing: border-box;
       box-sizing: border-box;
@@ -18,19 +19,72 @@
       box-sizing: inherit;
     }
 
+    html, body {
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      background-color: #eee;
+    }
+
+    live-demo {
+      display: block;
+      padding: 8px;
+      background-color: #fee;
+      border: 4px solid #ecc;
+    }
+
+    main {
+      background-color: #fff;
+      display: block;
+      max-width: 760px;
+      padding:  8px;
+      margin: auto;
+      -webkit-box-shadow: 0px 0px 10px 5px silver;
+      -moz-box-shadow: 0px 0px 10px 5px silver;
+      box-shadow: 0px 0px 10px 5px silver;
+    }
+
+    section, pre {
+      padding: 8px;
+    }
+    code, pre:before {
+      padding: 4px;
+    }
+
+    /*section:nth-child(1n+2)*/
+    section {
+      border-top: 4px dashed #eee;
+    }
+
     pre:before {
       content: 'Source code';
       display: block;
       font-weight: bold;
+      font-size: small;
+      margin-bottom: 4px;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      background-color: #333;
+      color: #ccc;
     }
-    pre {
-      padding: 8px;
+    code {
       background-color: #eee;
       color: #111;
+    }
+    pre {
+      overflow-x: auto;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.4em;
+    }
+    h3 {
+      font-size: 1.2em;
     }
 
     h3 a {
@@ -38,6 +92,7 @@
       text-decoration: none;
     }
     </style>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/highlight.min.js"></script>
     <script src="../vitamer-mixins.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -50,73 +105,143 @@
         section.appendChild(
           document.createElement('pre')
         ).textContent = html.join('\n')
-          .replace(/\n      /g, '\n')
+          // drop unnecesxasry spaces
+          .replace(/\n          /g, '\n')
+          // with doesn't have to be in quotes
+          // the minifier will optionally do that for us
           .replace(/'with':/g, 'with:')
+          // make already rendered content look like it was before
           .replace(/ dom-class-uid=".+?"/g, '')
           .replace('Planet Earth', '{{join(firstName, lastName)}}')
-          .replace('ve clicked 0 times', 've clicked {{clicks}} times');
+          .replace('ve clicked 0 times', 've clicked {{clicks}} times')
+          .replace('data-arguments="[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;]"', 'data-arguments=\'["Alpha","Beta","Gamma"]\'')
+        ;
+        hljs.highlightBlock(section.lastChild);
       });
     });
     </script>
   </head>
   <body>
-    <section id="hello-world">
-      <h3>Hello World <a title="Knockout version" href="http://knockoutjs.com/examples/helloWorld.html">[↗]</a></h3>
-      Main difference is that DOMClass one changes in real time and not only on <code>change</code> event.
-      <script>
-      DOMClass({
-        name: 'hello-world',
-        'with': [DOMClass.bindings],
-        bindings: {
-          firstName: 'Planet',
-          lastName: 'Earth',
-          join: function (firstName, lastName) {
-            return [firstName, lastName].join(' ');
-          }
-        }
-        //  just to reflect their style
-        ,   css: {h2: {fontSize: '100%'}}
-      });
-      </script>
-      <hello-world>
-        <p>First name: <input data-bind="value:firstName" /></p>
-        <p>Last name: <input data-bind="value:lastName" /></p>
-        <h2>Hello, {{join(firstName, lastName)}}!</h2>
-      </hello-world>
-    </section>
-    <section id="click-counter">
-      <h3>Click counter <a title="Knockout version" href="http://knockoutjs.com/examples/clickCounter.html">[↗]</a></h3>
-      Main difference is that we use standard events when we need them.
-      This gives us the ability to also drop them eventually in some edge case we might encounter.
-      <script>
-      DOMClass({
-        name: 'click-counter',
-        'with': [DOMClass.bindings],
-        css: {'[visible=false]': {display: 'none'}},
-        bindings: {
-          clicks: 0,
-          tooMany: function (clicks) { return clicks >= 3; }
-        },
-        constructor: function () {
-          this.query('.increment').addEventListener('click', this);
-          this.query('.reset').addEventListener('click', this);
-        },
-        // handleEvent is **not** magic, just regular DOM3 behavior
-        handleEvent: function (e) {
-          var btn = e.currentTarget;
-          if (btn.classList.contains('increment')) ++this.bindings.clicks;
-          else this.bindings.clicks = 0;
-        }
-      });
-      </script>
-      <click-counter>
-        <div>You've clicked {{clicks}} times</div>
-        <button class="increment" data-bind='disabled:tooMany(clicks)'>Click me</button>
-        <div data-bind='visible:tooMany(clicks)'>
-          That's too many clicks! Please stop before you wear out your fingers.
-          <button class="reset">Reset clicks</button>
-        </div>
-      </click-counter>
-    </section>
+    <main>
+      <h1><a href="https://github.com/WebReflection/dom-class">DOMClass</a> VS <a href="http://knockoutjs.com/">Knockout</a></h1>
+      <p>
+        This page replicates <a href="http://knockoutjs.com/examples/">Knockout examples</a> via <code>DOMClass</code> components.
+      </p>
+      <p>
+        Each example explains main differences between original code <strong><small>[↗]</small></strong> and the one used here.
+      </p>
+      <p>
+        Feel free to check the source code of this page to actually see that <abbr title="What You See Is What You Get">WYSIWYG</abbr>.
+      </p>
+      <section id="hello-world">
+        <h3>Hello World <a title="Knockout version" href="http://knockoutjs.com/examples/helloWorld.html">[↗]</a></h3>
+        <p>
+          Main difference is that DOMClass one changes in real time and not only on <code>change</code> event.
+        </p>
+        <live-demo>
+          <script>
+          DOMClass({
+            name: 'hello-world',
+            'with': [DOMClass.bindings],
+            bindings: {
+              firstName: 'Planet',
+              lastName: 'Earth',
+              join: function (firstName, lastName) {
+                return [firstName, lastName].join(' ');
+              }
+            }
+            //  just to reflect their style
+            ,   css: {h2: {fontSize: '100%'}}
+          });
+          </script>
+          <hello-world>
+            <p>First name: <input data-bind="value:firstName" /></p>
+            <p>Last name: <input data-bind="value:lastName" /></p>
+            <h2>Hello, {{join(firstName, lastName)}}!</h2>
+          </hello-world>
+        </live-demo>
+      </section>
+      <section id="click-counter">
+        <h3>Click counter <a title="Knockout version" href="http://knockoutjs.com/examples/clickCounter.html">[↗]</a></h3>
+        <p>
+          Main difference is that we use standard events when we need them.
+          This gives us the ability to also drop them eventually in some edge case we might encounter.
+        </p>
+        <live-demo>
+          <script>
+          DOMClass({
+            name: 'click-counter',
+            'with': [DOMClass.bindings],
+            css: {'[visible=false]': {display: 'none'}},
+            bindings: {
+              clicks: 0,
+              tooMany: function (clicks) { return clicks >= 3; }
+            },
+            constructor: function () {
+              this.query('.increment').addEventListener('click', this);
+              this.query('.reset').addEventListener('click', this);
+            },
+            // handleEvent is **not** magic, just regular DOM3 behavior
+            handleEvent: function (e) {
+              var btn = e.currentTarget;
+              if (btn.classList.contains('increment')) ++this.bindings.clicks;
+              else this.bindings.clicks = 0;
+            }
+          });
+          </script>
+          <click-counter>
+            <div>You've clicked {{clicks}} times</div>
+            <button class="increment" data-bind='disabled:tooMany(clicks)'>Click me</button>
+            <div data-bind='visible:tooMany(clicks)'>
+              That's too many clicks! Please stop before you wear out your fingers.
+              <button class="reset">Reset clicks</button>
+            </div>
+          </click-counter>
+        </live-demo>
+      </section>
+      <section>
+        <h3>Simple list <a title="Knockout version" href="http://knockoutjs.com/examples/simpleList.html">[↗]</a></h3>
+        <p>
+          The main difference is that DOMClass doesn't have auto-magic behaviors. The bound <code>options</code>, as example,
+          will be exactly the <code>select.options</code> and instead of using <code>this.items.push(value)</code> we expose a proper <code>addItem</code> method.
+        </p>
+        <p>
+          Another important difference is the ability to pass constructor <code>arguments</code> as JSON Array and through the <code>data-arguments</code> property.
+          This makes the component usable as pre-rendered HTML, or as simple JS created one: <code>body.append(new SimpleList('a','b'))</code>
+        </p>
+        <live-demo>
+          <script>
+          var SimpleList = DOMClass({
+            name: 'simple-list',
+            'with': [DOMClass.bindings],
+            css: {select: {width: '100%'}},
+            bindings: {notAllowed: function (name) { return !name; }},
+            constructor: function () {
+              for (var i = 0; i < arguments.length; i++)
+                this.addItem(arguments[i]);
+              this.query('button').addEventListener('click', this);
+            },
+            addItem: function (value) {
+              var option = document.createElement('option');
+              option.value = (option.textContent = value);
+              this.query('select').append(option);
+            },
+            handleEvent: function (e) {
+              var input = this.query('input');
+              this.addItem(input.value);
+              input.value = '';
+            }
+          });
+          </script>
+          <simple-list data-arguments='["Alpha","Beta","Gamma"]'>
+            New item:
+            <input data-bind="value:itemName">
+            <button data-bind="disabled:notAllowed(itemName)">Add</button>
+            <p>Your items:</p>
+            <select data-bind="options" multiple="multiple" width="50"></select>
+          </simple-list>
+        </live-demo>
+      </section>
+    </main>
   </body>
 </html>
