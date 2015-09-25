@@ -258,13 +258,11 @@
             css: {select: {width: '100%'}},
             bindings: {
               optionsLength: 0,
-              selected: false,
               disableAdd: function (name) { return !name; },
-              disableRemove: function (length) { return !length; },
               disableSort: function (length) { return length < 2; },
               update: function () {
                 this.optionsLength = this.options.length;
-                this.selected = [].some.call(this.options, function (option) {
+                this.disabledRemove = ![].some.call(this.options, function (option) {
                   return option.selected;
                 });
               }
@@ -317,7 +315,7 @@
             <p>Your values:</p>
             <select data-bind="options" multiple="multiple" width="50"></select>
             <div>
-              <button name="remove" data-bind="disabled:disableRemove(selected)">Remove</button>
+              <button name="remove" data-bind="disabled:disabledRemove">Remove</button>
               <button name="sort" data-bind="disabled:disableSort(optionsLength)">Sort</button>
             </div>
           </better-list>
