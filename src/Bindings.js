@@ -122,12 +122,13 @@ Object.defineProperty(DOMClass, 'bindings', {
 
     // if there's some textual binding in the wild, like inside
     // a generic node, it will be bound "one way" here
-    function boundTextNode(bindings, key, node) {
+    function boundTextNode(bindings, key, node, dB, dS) {
       var value, setter = hOP.call(bindings, key) && gOPD(bindings, key).set;
       dP(bindings, key, createGetSet(
         function get() { return value; },
         function set(v) {
           node.nodeValue = (value = v);
+          if (dB) dS(key);
           if (setter) setter.call(bindings, v);
         }
       ));
@@ -136,7 +137,7 @@ Object.defineProperty(DOMClass, 'bindings', {
 
     // if there's some HTML binding in the wild, like inside
     // a generic node, it will be bound "one way" here
-    function boundFragmentNode(bindings, key, document, innerHTML) {
+    function boundFragmentNode(bindings, key, document, innerHTML, dB, dS) {
       var
         setter = hOP.call(bindings, key) && gOPD(bindings, key).set,
         pins = createFragment(document, innerHTML)
@@ -145,6 +146,7 @@ Object.defineProperty(DOMClass, 'bindings', {
         function get() { return innerHTML; },
         function set(value) {
           pins = updatePins(document, pins, (innerHTML = value));
+          if (dB) dS(key);
           if (setter) setter.call(bindings, value);
         }
       ));
@@ -438,14 +440,15 @@ Object.defineProperty(DOMClass, 'bindings', {
           }
           // and in case there was some binding in the wild
           if (bound.length) {
-            // drop current node
-            node.remove();
             // put last part of the loop in the list of nodes
             nodes.push(value.slice(i));
             // and append all of them
             nodes.forEach(function (text, i) {
               // let's ignore empty text nodes
-              if (text.length) parentNode.append(document.createTextNode(text));
+              if (text.length) parentNode.insertBefore(
+                document.createTextNode(text),
+                node
+              );
               // bound nodes are always after regular
               // unless we are at the end of the list
               if (i < bound.length) {
@@ -454,29 +457,38 @@ Object.defineProperty(DOMClass, 'bindings', {
                 isHTML = oneWayHTML.test(k);
                   if (isHTML) k = k.slice(1, -1);
                 if ((m = decepticons.exec(k))) {
-                  parentNode.append(
+                  parentNode.insertBefore(
                     boundTransformer(
                       bindings, autobots, values, m[1], m[2], document, isHTML
-                    )
+                    ),
+                    node
                   );
                 } else {
                   setGetSetIfAvailable(values, bindings, k);
-                  parentNode.append(isHTML ?
+                  parentNode.insertBefore(
+                    isHTML ?
                     boundFragmentNode(
                       values, k,
                       document,
-                      notNull(bindings[k], '')
+                      notNull(bindings[k], ''),
+                      dispatchBindings,
+                      dispatchScheduler
                     ) :
                     boundTextNode(
                       values, k,
                       document.createTextNode(
                         notNull(bindings[k], '')
-                      )
-                    )
+                      ),
+                      dispatchBindings,
+                      dispatchScheduler
+                    ),
+                    node
                   );
                 }
               }
             });
+            // drop current node
+            node.remove();
           }
         });
 
@@ -714,6 +726,8 @@ Object.defineProperty(DOMClass, 'bindings', {
               }
             }
           });
+          // if it's' a nested element avoid parsing from parent containers
+          el.removeAttribute('data-bind');
         });
 
         // if MutationObserver is available and

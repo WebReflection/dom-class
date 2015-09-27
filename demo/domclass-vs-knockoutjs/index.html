@@ -97,7 +97,10 @@
     <script>
     document.addEventListener('DOMContentLoaded', function () {
       this.queryAll('section').forEach(function (section) {
-        var node = section.query('script'), html = [];
+        var
+          node = section.query('live-demo').firstElementChild,
+          html = []
+        ;
         while (node) {
           html.push(node.outerHTML);
           node = node.nextElementSibling;
@@ -116,6 +119,15 @@
           .replace('ve clicked 0 times', 've clicked {{clicks}} times')
           .replace('data-arguments="[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;]"', 'data-arguments=\'["Alpha","Beta","Gamma"]\'')
           .replace('data-arguments="[&quot;Fries&quot;,&quot;Eggs Benedict&quot;,&quot;Ham&quot;,&quot;Cheese&quot;]"', 'data-arguments=\'["Fries","Eggs Benedict","Ham","Cheese"]\'')
+          .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
+          .replace('<option value="Fries">Fries</option><option value="Eggs Benedict">Eggs Benedict</option><option value="Ham">Ham</option><option value="Cheese">Cheese</option>', '')
+          .replace('<td>Hello</td>', '<td>{{stringValue}}</td>')
+          .replace('<td>mypass</td>', '<td>{{passwordValue}}</td>')
+          .replace('<td>True</td>', '<td>{{getBoolTxt(booleanValue)}}</td>')
+          .replace('<td>Gamma</td>', '<td>{{getSingleSelectValue(selectedIndex)}}</td>')
+          .replace('<td>Alpha</td>', '<td>{{getMultipleSelectValue(selectedOptions)}}</td>')
+          .replace('<td>Beta</td>', '<td>{{getRadio(radioAlpha,radioBeta,radioGamma)}}</td>')
+          .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
           .replace('[{&quot;stringValue&quot;:&quot;Hello&quot;,&quot;passwordValue&quot;:&quot;mypass&quot;,&quot;booleanValue&quot;:true,&quot;optionValues&quot;:[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;],&quot;selectedOptionValue&quot;:&quot;Gamma&quot;,&quot;multipleSelectedOptionValues&quot;:[&quot;Alpha&quot;],&quot;radioSelectedOptionValue&quot;:&quot;Beta&quot;}]', '[{"stringValue":"Hello","passwordValue":"mypass","booleanValue":true,"optionValues":["Alpha","Beta","Gamma"],"selectedOptionValue":"Gamma","multipleSelectedOptionValues":["Alpha"],"radioSelectedOptionValue":"Beta"}]')
         ;
         hljs.highlightBlock(section.lastChild);
@@ -463,6 +475,81 @@
               </tr>
             </table>
           </control-types>
+        </live-demo>
+      </section>
+      <section>
+        <h3>Working with Collections <a title="Knockout version" href="http://knockoutjs.com/examples/collections.html">[↗]</a></h3>
+        <p></p>
+        <live-demo>
+          <script>
+          DOMClass({
+            name: 'random-person',
+            'static': {
+              Child: DOMClass({
+                'with': [DOMClass.bindings],
+                template: ''.concat(
+                  '<li>',
+                    '{{name}}',
+                    '<span class="renderTime" data-bind="data-visible:showRenderTimes">',
+                      '(child rendered at {{renderSeconds}})',
+                    '</span>',
+                  '</li>'
+                ),
+                bindings: {
+                  showRenderTimes: false,
+                  get renderSeconds() { return new Date().getSeconds(); }
+                },
+                constructor: function (name) {
+                  this.bindings.name = name;
+                }
+              })
+            },
+            css: {'':{display:'block'},'.renderTime[data-visible=false]': {display: 'none'}},
+            'with': [DOMClass.bindings],
+            dispatchBindings: true,
+            template: ''.concat(
+              '<div>',
+                '{{name}} has {{childrenLength}} children: ',
+                '<a href="#" data-bind="onclick:addChild">Add child</a> ',
+                '<span class="renderTime" data-bind="data-visible:showRenderTimes">',
+                  '(person rendered at {{renderSeconds}})',
+                '</span>',
+              '</div>',
+              '<ul></ul>'
+            ),
+            bindings: {
+              showRenderTimes: false,
+              childrenLength: 0,
+              addChild: function (e) {
+                if (e) e.preventDefault();
+                this.childrenLength = this.children.push('New child');
+              },
+              getLength: function (list) { return list.length; },
+              get renderSeconds() { return new Date().getSeconds(); },
+              showRenderTimes: false
+            },
+            constructor: function (name, children) {
+              this.bindings.name = name;
+              this.bindings.children = children.slice(0);
+              this.bindings.childrenLength = children.length;
+              this.addEventListener('bindingChanged', this);
+            },
+            handleEvent: function (e) {
+              if (e.detail.key !== 'childrenLength') return;
+              var ul = this.query('ul'),
+                  i = ul.children.length;
+              while (i < this.bindings.children.length)
+                ul.append(new this.constructor.Child(
+                  this.bindings.children[i++]
+                ));
+            }
+          });
+          </script>
+          <ul>
+            <li><random-person data-arguments='["Annabelle",["Arnie","Anders","Apple"]]'></random-person></li>
+            <li><random-person data-arguments='["Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"]]'></random-person></li>
+            <li><random-person data-arguments='["Charles",["Cayenne","Cleopatra"]]'></random-person></li>
+          </ul>
         </live-demo>
       </section>
     </main>
