@@ -210,10 +210,11 @@ var DOMClass = (function (g, A, O) {'use strict';
     key = hOP.call(description, NAME) ? description[NAME] : ('x-dom-class-' + i++);
     if (css) el[STYLE] = restyle(key, description[CSS]);
     el[CONSTRUCTOR_CALLBACK] = function () {
-      args = grantArguments(this, args);
-      constructor.apply(this, args);
+      var a = grantArguments(this, args);
+      args = empty;
+      constructor.apply(this, a);
       if (css) lazyStyle(this, key, uid(key));
-      if (init) createdCallback.apply(this, args);
+      if (init) createdCallback.apply(this, a);
     };
     constructor = new Class(el);
     copyOwn(constructor, CustomElement);

@@ -97,7 +97,10 @@
     <script>
     document.addEventListener('DOMContentLoaded', function () {
       this.queryAll('section').forEach(function (section) {
-        var node = section.query('script'), html = [];
+        var
+          node = section.query('live-demo').firstElementChild,
+          html = []
+        ;
         while (node) {
           html.push(node.outerHTML);
           node = node.nextElementSibling;
@@ -116,7 +119,17 @@
           .replace('ve clicked 0 times', 've clicked {{clicks}} times')
           .replace('data-arguments="[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;]"', 'data-arguments=\'["Alpha","Beta","Gamma"]\'')
           .replace('data-arguments="[&quot;Fries&quot;,&quot;Eggs Benedict&quot;,&quot;Ham&quot;,&quot;Cheese&quot;]"', 'data-arguments=\'["Fries","Eggs Benedict","Ham","Cheese"]\'')
+          .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
+          .replace('<option value="Fries">Fries</option><option value="Eggs Benedict">Eggs Benedict</option><option value="Ham">Ham</option><option value="Cheese">Cheese</option>', '')
+          .replace('<td>Hello</td>', '<td>{{stringValue}}</td>')
+          .replace('<td>mypass</td>', '<td>{{passwordValue}}</td>')
+          .replace('<td>True</td>', '<td>{{getBoolTxt(booleanValue)}}</td>')
+          .replace('<td>Gamma</td>', '<td>{{getSingleSelectValue(selectedIndex)}}</td>')
+          .replace('<td>Alpha</td>', '<td>{{getMultipleSelectValue(selectedOptions)}}</td>')
+          .replace('<td>Beta</td>', '<td>{{getRadio(radioAlpha,radioBeta,radioGamma)}}</td>')
+          .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
           .replace('[{&quot;stringValue&quot;:&quot;Hello&quot;,&quot;passwordValue&quot;:&quot;mypass&quot;,&quot;booleanValue&quot;:true,&quot;optionValues&quot;:[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;],&quot;selectedOptionValue&quot;:&quot;Gamma&quot;,&quot;multipleSelectedOptionValues&quot;:[&quot;Alpha&quot;],&quot;radioSelectedOptionValue&quot;:&quot;Beta&quot;}]', '[{"stringValue":"Hello","passwordValue":"mypass","booleanValue":true,"optionValues":["Alpha","Beta","Gamma"],"selectedOptionValue":"Gamma","multipleSelectedOptionValues":["Alpha"],"radioSelectedOptionValue":"Beta"}]')
+          .replace('[\n    &quot;Annabelle&quot;,[&quot;Arnie&quot;,&quot;Anders&quot;,&quot;Apple&quot;],\n    &quot;Bertie&quot;,[&quot;Boutros-Boutros&quot;,&quot;Brianna&quot;,&quot;Barbie&quot;,&quot;Bee-bop&quot;],\n    &quot;Charles&quot;,[&quot;Cayenne&quot;,&quot;Cleopatra&quot;]\n  ]', '[\n              "Annabelle",["Arnie","Anders","Apple"],\n              "Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"],\n              "Charles",["Cayenne","Cleopatra"]\n            ]')
         ;
         hljs.highlightBlock(section.lastChild);
       });
@@ -134,6 +147,11 @@
       </p>
       <p>
         Feel free to check the source code of this page to actually see that <abbr title="What You See Is What You Get">WYSIWYG</abbr>.
+      </p>
+      <p>
+        Please bear in mind that DOMClass is a Web Components like abstraction, which is very different as paradigm to Knockout one.
+        Also please remember not a single piece of DOMClass code has been evaluated and also there are no repeaters in the templates.
+        It's a simplified way to create components which are nice and clean and don't need model definitions on the wild but just a class definition to possibly never even interact with directly but through events.
       </p>
       <section id="hello-world">
         <h3>Hello World <a title="Knockout version" href="http://knockoutjs.com/examples/helloWorld.html">[↗]</a></h3>
@@ -324,7 +342,10 @@
       </section>
       <section>
         <h3>Control types <a title="Knockout version" href="http://knockoutjs.com/examples/controlTypes.html">[↗]</a></h3>
-        <p></p>
+        <p>The main difference is that in DOMClass you can invoke methods but you need to specify per which property such method should be invoked.</p>
+        <p>Please note this is a very demo-ish exercise and the crossed representation of the same binding in multiple place is not an ideal scenario to define with current bindings logic but also ... hey, it works ;-)</p>
+        <p>For the first time in this page we use direct methods bindings too so that <code>onchange:method</code> will invoke <code>bindings.method(event)</code> once it changes.</p>
+        <p>Again, this is a demo, so here I am showing off some bindings features but in a component like approach we could just use <code>addEventListener</code> and update bindings once triggered.</p>
         <live-demo>
           <script>
           DOMClass({
@@ -463,6 +484,99 @@
               </tr>
             </table>
           </control-types>
+        </live-demo>
+      </section>
+      <section>
+        <h3>Working with Collections <a title="Knockout version" href="http://knockoutjs.com/examples/collections.html">[↗]</a></h3>
+        <p>Main difference in this example is that DOMClass does not use eval or Function so it's more procedural.</p>
+        <p>Also there are no repeaters in the template, because there are no nested bindings yet.</p>
+        <p>The component is split in 3: the main container, its generic Person and eventually children through the Child component.</p>
+        <live-demo>
+          <script>
+          DOMClass({
+            name: 'random-people',
+            'static': {
+              Person: DOMClass({
+                'static': {
+                  Child: DOMClass({
+                    'with': [DOMClass.bindings],
+                    template: ''.concat(
+                      '<li>{{name}} <span class="renderTime">',
+                          '(child rendered at {{renderSeconds}})',
+                      '</span></li>'
+                    ),
+                    bindings: { get renderSeconds() { return new Date().getSeconds(); } },
+                    constructor: function (name) { this.bindings.name = name; }
+                  })
+                },
+                'with': [DOMClass.bindings],
+                template: ''.concat(
+                  '<li><div>{{name}} has {{childrenLength}} children: ',
+                    '<a href="#" data-bind="onclick:addChild">Add child</a> ',
+                    '<span class="renderTime">',
+                      '(person rendered at {{renderSeconds}})',
+                    '</span>',
+                  '</div><ul></ul></li>'
+                ),
+                bindings: {
+                  childrenLength: 0,
+                  addChild: function () {
+                    this.childrenLength = this.children.push('New child');
+                    return false;
+                  },
+                  get renderSeconds() { return new Date().getSeconds(); }
+                },
+                dispatchBindings: true,
+                constructor: function (name, children) {
+                  this.bindings.name = name;
+                  this.bindings.children = children.slice(0);
+                  this.bindings.childrenLength = children.length;
+                  this.addEventListener('bindingChanged', this);
+                },
+                handleEvent: function (e) {
+                  if (e.detail.key !== 'childrenLength') return;
+                  var ul = this.query('ul'),
+                      i = ul.children.length;
+                  while (i < this.bindings.children.length)
+                    ul.append(new this.constructor.Child(
+                      this.bindings.children[i++]
+                    ));
+                }
+              })
+            },
+            'with': [DOMClass.bindings],
+            dispatchBindings: 0,
+            template: ''.concat(
+              '<ul></ul><label>',
+              '<input data-bind="checked" type="checkbox"> ',
+              'Show render times</label>'
+            ),
+            css: {
+              'ul .renderTime': {display: 'none'},
+              'ul.showTime .renderTime': {display: 'inline'},
+              '.renderTime': {fontSize: 'small', color: '#666'}
+            },
+            constructor: function () {
+              for (var
+                Person = this.constructor.Person,
+                ul = this.query('ul'),
+                i = 0; i < arguments.length; i += 2
+              ) ul.appendChild(new Person(arguments[i], arguments[i + 1]));
+              this.updateRenderTime();
+              this.addEventListener('bindingChanged', this.updateRenderTime);
+            },
+            updateRenderTime: function () {
+              this.query('ul').classList.toggle('showTime', this.bindings.checked);
+            }
+          });
+          </script>
+          <random-people
+            data-arguments='[
+              "Annabelle",["Arnie","Anders","Apple"],
+              "Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"],
+              "Charles",["Cayenne","Cleopatra"]
+            ]'>
+          </random-people>
         </live-demo>
       </section>
     </main>
