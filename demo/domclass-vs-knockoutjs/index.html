@@ -129,6 +129,7 @@
           .replace('<td>Beta</td>', '<td>{{getRadio(radioAlpha,radioBeta,radioGamma)}}</td>')
           .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
           .replace('[{&quot;stringValue&quot;:&quot;Hello&quot;,&quot;passwordValue&quot;:&quot;mypass&quot;,&quot;booleanValue&quot;:true,&quot;optionValues&quot;:[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;],&quot;selectedOptionValue&quot;:&quot;Gamma&quot;,&quot;multipleSelectedOptionValues&quot;:[&quot;Alpha&quot;],&quot;radioSelectedOptionValue&quot;:&quot;Beta&quot;}]', '[{"stringValue":"Hello","passwordValue":"mypass","booleanValue":true,"optionValues":["Alpha","Beta","Gamma"],"selectedOptionValue":"Gamma","multipleSelectedOptionValues":["Alpha"],"radioSelectedOptionValue":"Beta"}]')
+          .replace('[\n    &quot;Annabelle&quot;,[&quot;Arnie&quot;,&quot;Anders&quot;,&quot;Apple&quot;],\n    &quot;Bertie&quot;,[&quot;Boutros-Boutros&quot;,&quot;Brianna&quot;,&quot;Barbie&quot;,&quot;Bee-bop&quot;],\n    &quot;Charles&quot;,[&quot;Cayenne&quot;,&quot;Cleopatra&quot;]\n  ]', '[\n              "Annabelle",["Arnie","Anders","Apple"],\n              "Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"],\n              "Charles",["Cayenne","Cleopatra"]\n            ]')
         ;
         hljs.highlightBlock(section.lastChild);
       });
@@ -479,77 +480,96 @@
       </section>
       <section>
         <h3>Working with Collections <a title="Knockout version" href="http://knockoutjs.com/examples/collections.html">[↗]</a></h3>
-        <p></p>
+        <p>Main difference in this example is that DOMClass does not use eval or Function so it's more procedural.</p>
+        <p>Also there are no repeaters in the template, because there are no nested bindings yet.</p>
+        <p>The component is split in 3: the main container, its generic Person and eventually children through the Child component.</p>
         <live-demo>
           <script>
           DOMClass({
-            name: 'random-person',
+            name: 'random-people',
             'static': {
-              Child: DOMClass({
+              Person: DOMClass({
+                name: 'random-person',
+                'static': {
+                  Child: DOMClass({
+                    'with': [DOMClass.bindings],
+                    template: ''.concat(
+                      '<li>{{name}} <span class="renderTime">',
+                          '(child rendered at {{renderSeconds}})',
+                      '</span></li>'
+                    ),
+                    bindings: { get renderSeconds() { return new Date().getSeconds(); } },
+                    constructor: function (name) { this.bindings.name = name; }
+                  })
+                },
                 'with': [DOMClass.bindings],
                 template: ''.concat(
-                  '<li>',
-                    '{{name}}',
-                    '<span class="renderTime" data-bind="data-visible:showRenderTimes">',
-                      '(child rendered at {{renderSeconds}})',
+                  '<li><div>{{name}} has {{childrenLength}} children: ',
+                    '<a href="#" data-bind="onclick:addChild">Add child</a> ',
+                    '<span class="renderTime">',
+                      '(person rendered at {{renderSeconds}})',
                     '</span>',
-                  '</li>'
+                  '</div><ul></ul></li>'
                 ),
                 bindings: {
-                  showRenderTimes: false,
+                  childrenLength: 0,
+                  addChild: function () {
+                    this.childrenLength = this.children.push('New child');
+                    return false;
+                  },
                   get renderSeconds() { return new Date().getSeconds(); }
                 },
-                constructor: function (name) {
+                dispatchBindings: true,
+                constructor: function (name, children) {
                   this.bindings.name = name;
+                  this.bindings.children = children.slice(0);
+                  this.bindings.childrenLength = children.length;
+                  this.addEventListener('bindingChanged', this);
+                },
+                handleEvent: function (e) {
+                  if (e.detail.key !== 'childrenLength') return;
+                  var ul = this.query('ul'),
+                      i = ul.children.length;
+                  while (i < this.bindings.children.length)
+                    ul.append(new this.constructor.Child(
+                      this.bindings.children[i++]
+                    ));
                 }
               })
             },
-            css: {'':{display:'block'},'.renderTime[data-visible=false]': {display: 'none'}},
             'with': [DOMClass.bindings],
-            dispatchBindings: true,
+            dispatchBindings: 0,
             template: ''.concat(
-              '<div>',
-                '{{name}} has {{childrenLength}} children: ',
-                '<a href="#" data-bind="onclick:addChild">Add child</a> ',
-                '<span class="renderTime" data-bind="data-visible:showRenderTimes">',
-                  '(person rendered at {{renderSeconds}})',
-                '</span>',
-              '</div>',
-              '<ul></ul>'
+              '<ul></ul><label>',
+              '<input data-bind="checked" type="checkbox"> ',
+              'Show render times</label>'
             ),
-            bindings: {
-              showRenderTimes: false,
-              childrenLength: 0,
-              addChild: function (e) {
-                if (e) e.preventDefault();
-                this.childrenLength = this.children.push('New child');
-              },
-              getLength: function (list) { return list.length; },
-              get renderSeconds() { return new Date().getSeconds(); },
-              showRenderTimes: false
+            css: {
+              'ul .renderTime': {display: 'none'},
+              'ul.showTime .renderTime': {display: 'inline'},
+              '.renderTime': {fontSize: 'small', color: '#666'}
             },
-            constructor: function (name, children) {
-              this.bindings.name = name;
-              this.bindings.children = children.slice(0);
-              this.bindings.childrenLength = children.length;
-              this.addEventListener('bindingChanged', this);
+            constructor: function () {
+              for (var
+                Person = this.constructor.Person,
+                ul = this.query('ul'),
+                i = 0; i < arguments.length; i += 2
+              ) ul.appendChild(new Person(arguments[i], arguments[i + 1]));
+              this.updateRenderTime();
+              this.addEventListener('bindingChanged', this.updateRenderTime);
             },
-            handleEvent: function (e) {
-              if (e.detail.key !== 'childrenLength') return;
-              var ul = this.query('ul'),
-                  i = ul.children.length;
-              while (i < this.bindings.children.length)
-                ul.append(new this.constructor.Child(
-                  this.bindings.children[i++]
-                ));
+            updateRenderTime: function () {
+              this.query('ul').classList.toggle('showTime', this.bindings.checked);
             }
           });
           </script>
-          <ul>
-            <li><random-person data-arguments='["Annabelle",["Arnie","Anders","Apple"]]'></random-person></li>
-            <li><random-person data-arguments='["Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"]]'></random-person></li>
-            <li><random-person data-arguments='["Charles",["Cayenne","Cleopatra"]]'></random-person></li>
-          </ul>
+          <random-people
+            data-arguments='[
+              "Annabelle",["Arnie","Anders","Apple"],
+              "Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"],
+              "Charles",["Cayenne","Cleopatra"]
+            ]'>
+          </random-people>
         </live-demo>
       </section>
     </main>
