@@ -148,6 +148,11 @@
       <p>
         Feel free to check the source code of this page to actually see that <abbr title="What You See Is What You Get">WYSIWYG</abbr>.
       </p>
+      <p>
+        Please bear in mind that DOMClass is a Web Components like abstraction, which is very different as paradigm to Knockout one.
+        Also please remember not a single piece of DOMClass code has been evaluated and also there are no repeaters in the templates.
+        It's a simplified way to create components which are nice and clean and don't need model definitions on the wild but just a class definition to possibly never even interact with directly but through events.
+      </p>
       <section id="hello-world">
         <h3>Hello World <a title="Knockout version" href="http://knockoutjs.com/examples/helloWorld.html">[↗]</a></h3>
         <p>
@@ -337,7 +342,10 @@
       </section>
       <section>
         <h3>Control types <a title="Knockout version" href="http://knockoutjs.com/examples/controlTypes.html">[↗]</a></h3>
-        <p></p>
+        <p>The main difference is that in DOMClass you can invoke methods but you need to specify per which property such method should be invoked.</p>
+        <p>Please note this is a very demo-ish exercise and the crossed representation of the same binding in multiple place is not an ideal scenario to define with current bindings logic but also ... hey, it works ;-)</p>
+        <p>For the first time in this page we use direct methods bindings too so that <code>onchange:method</code> will invoke <code>bindings.method(event)</code> once it changes.</p>
+        <p>Again, this is a demo, so here I am showing off some bindings features but in a component like approach we could just use <code>addEventListener</code> and update bindings once triggered.</p>
         <live-demo>
           <script>
           DOMClass({
@@ -489,7 +497,6 @@
             name: 'random-people',
             'static': {
               Person: DOMClass({
-                name: 'random-person',
                 'static': {
                   Child: DOMClass({
                     'with': [DOMClass.bindings],
