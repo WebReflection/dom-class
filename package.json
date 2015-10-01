@@ -2,7 +2,7 @@
   "version": "0.5.0",
   "license": "MIT",
   "name": "dom-class",
-  "description": "",
+  "description": "A lightweight, cross browser, simplification of WebComponents",
   "homepage": "https://github.com/WebReflection/dom-class",
   "keywords": [
     "custom",

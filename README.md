@@ -6,6 +6,19 @@ Built on top of [es-class](https://github.com/WebReflection/es-class#es-class-),
 
 Please read the [related blog post](https://www.webreflection.co.uk/blog/2015/09/17/simplified-web-components-via-dom-class) to know extra details about this project.
 
+
+### Demo
+In case of doubts, some demo could quickly clarify DOMClass potentials so here they are:
+
+  * the (in)famouse [DBMonster](http://webreflection.github.io/dom-class/demo/dbmonster.html) benchmark, a [component](https://github.com/WebReflection/dom-class/blob/master/demo/db-monster.js) split in rows and cells that performs like its pure DOM counter part
+  * few [classic basic components](http://webreflection.github.io/dom-class/demo/) for forms and playful interaction, or runtime creation
+  * a one to one [comparison VS Knockout JS](http://webreflection.github.io/dom-class/demo/domclass-vs-knockoutjs/), showing main differences between these two approaches. TL;DR is that `DOMClass` doesn't use `eval` or `Function` and it's based on DRY components rather than magic HTML parsing (which is not necessarily a bad thing but it's surely a different paradigm)
+
+Finally a quoted comment from [DOMClass.bindings Mixin VS Performance](https://www.webreflection.co.uk/blog/2015/09/21/dom-class-bindings-vs-performance) post
+
+> This is seriously cool ... so much functionality via so little framework code.It begs the question ... "What the heck are those other frameworks doing that involves so much code?". I especially like that it is based on the existing web platform as opposed to what is promised in V.Next (i.e. ES5,6, etc, etc). Outstanding work.
+
+
 ### How To
 All [es-class features](https://github.com/WebReflection/es-class#features-example) are included, and the `constructor` will be automatically used once  the component has been initialized.
 
