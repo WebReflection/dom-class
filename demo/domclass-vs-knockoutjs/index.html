@@ -102,7 +102,12 @@
           html = []
         ;
         while (node) {
-          html.push(node.outerHTML);
+          if (node.nodeName === 'SCRIPT') {
+            html.push(node.outerHTML.replace(' type="dom-class/example"', ''));
+            setTimeout(eval, 0, node.textContent);
+          } else {
+            html.push(node.outerHTML);
+          }
           node = node.nextElementSibling;
         }
         section.appendChild(
@@ -110,24 +115,8 @@
         ).textContent = html.join('\n')
           // drop unnecesxasry spaces
           .replace(/\n          /g, '\n')
-          // with doesn't have to be in quotes
-          // the minifier will optionally do that for us
-          .replace(/'with':/g, 'with:')
-          // make already rendered content look like it was before
-          .replace(/ dom-class-uid=".+?"/g, '')
-          .replace('Planet Earth', '{{join(firstName, lastName)}}')
-          .replace('ve clicked 0 times', 've clicked {{clicks}} times')
           .replace('data-arguments="[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;]"', 'data-arguments=\'["Alpha","Beta","Gamma"]\'')
           .replace('data-arguments="[&quot;Fries&quot;,&quot;Eggs Benedict&quot;,&quot;Ham&quot;,&quot;Cheese&quot;]"', 'data-arguments=\'["Fries","Eggs Benedict","Ham","Cheese"]\'')
-          .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
-          .replace('<option value="Fries">Fries</option><option value="Eggs Benedict">Eggs Benedict</option><option value="Ham">Ham</option><option value="Cheese">Cheese</option>', '')
-          .replace('<td>Hello</td>', '<td>{{stringValue}}</td>')
-          .replace('<td>mypass</td>', '<td>{{passwordValue}}</td>')
-          .replace('<td>True</td>', '<td>{{getBoolTxt(booleanValue)}}</td>')
-          .replace('<td>Gamma</td>', '<td>{{getSingleSelectValue(selectedIndex)}}</td>')
-          .replace('<td>Alpha</td>', '<td>{{getMultipleSelectValue(selectedOptions)}}</td>')
-          .replace('<td>Beta</td>', '<td>{{getRadio(radioAlpha,radioBeta,radioGamma)}}</td>')
-          .replace('<option value="Alpha">Alpha</option><option value="Beta">Beta</option><option value="Gamma">Gamma</option>', '')
           .replace('[{&quot;stringValue&quot;:&quot;Hello&quot;,&quot;passwordValue&quot;:&quot;mypass&quot;,&quot;booleanValue&quot;:true,&quot;optionValues&quot;:[&quot;Alpha&quot;,&quot;Beta&quot;,&quot;Gamma&quot;],&quot;selectedOptionValue&quot;:&quot;Gamma&quot;,&quot;multipleSelectedOptionValues&quot;:[&quot;Alpha&quot;],&quot;radioSelectedOptionValue&quot;:&quot;Beta&quot;}]', '[{"stringValue":"Hello","passwordValue":"mypass","booleanValue":true,"optionValues":["Alpha","Beta","Gamma"],"selectedOptionValue":"Gamma","multipleSelectedOptionValues":["Alpha"],"radioSelectedOptionValue":"Beta"}]')
           .replace('[\n    &quot;Annabelle&quot;,[&quot;Arnie&quot;,&quot;Anders&quot;,&quot;Apple&quot;],\n    &quot;Bertie&quot;,[&quot;Boutros-Boutros&quot;,&quot;Brianna&quot;,&quot;Barbie&quot;,&quot;Bee-bop&quot;],\n    &quot;Charles&quot;,[&quot;Cayenne&quot;,&quot;Cleopatra&quot;]\n  ]', '[\n              "Annabelle",["Arnie","Anders","Apple"],\n              "Bertie",["Boutros-Boutros","Brianna","Barbie","Bee-bop"],\n              "Charles",["Cayenne","Cleopatra"]\n            ]')
         ;
@@ -159,7 +148,7 @@
           Main difference is that DOMClass one changes in real time and not only on <code>change</code> event.
         </p>
         <live-demo>
-          <script>
+          <script type="dom-class/example">
           DOMClass({
             name: 'hello-world',
             'with': [DOMClass.bindings],
@@ -188,7 +177,7 @@
           This gives us the ability to also drop them eventually in some edge case we might encounter.
         </p>
         <live-demo>
-          <script>
+          <script type="dom-class/example">
           DOMClass({
             name: 'click-counter',
             'with': [DOMClass.bindings],
@@ -230,7 +219,7 @@
           This makes the component usable as pre-rendered HTML, or as simple JS created one: <code>body.append(new SimpleList('a','b'))</code>
         </p>
         <live-demo>
-          <script>
+          <script type="dom-class/example">
           var SimpleList = DOMClass({
             name: 'simple-list',
             'with': [DOMClass.bindings],
@@ -270,7 +259,7 @@
           We need to define what happens by ourselves and here that's defined in the <code>handleEvent</code>.
         </p>
         <live-demo>
-          <script>
+          <script type="dom-class/example">
           var BetterList = DOMClass({
             name: 'better-list',
             'with': [DOMClass.bindings],
@@ -347,7 +336,7 @@
         <p>For the first time in this page we use direct methods bindings too so that <code>onchange:method</code> will invoke <code>bindings.method(event)</code> once it changes.</p>
         <p>Again, this is a demo, so here I am showing off some bindings features but in a component like approach we could just use <code>addEventListener</code> and update bindings once triggered.</p>
         <live-demo>
-          <script>
+          <script type="dom-class/example">
           DOMClass({
             name: 'control-types',
             css: {
@@ -492,7 +481,7 @@
         <p>Also there are no repeaters in the template, because there are no nested bindings yet.</p>
         <p>The component is split in 3: the main container, its generic Person and eventually children through the Child component.</p>
         <live-demo>
-          <script>
+          <script type="dom-class/example">
           DOMClass({
             name: 'random-people',
             'static': {
