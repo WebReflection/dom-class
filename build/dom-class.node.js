@@ -231,5 +231,5 @@ var DOMClass = (function (g, A, O) {'use strict';
     dP(Element.prototype, CONSTRUCTOR, {value: CustomElement});
     return CustomElement;
   };
-}(this.window || global, Array, Object));
+}(window || global, Array, Object));
 module.exports = DOMClass;
