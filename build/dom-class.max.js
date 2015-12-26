@@ -227,4 +227,4 @@ var DOMClass = (function (g, A, O) {'use strict';
     dP(Element.prototype, CONSTRUCTOR, {value: CustomElement});
     return CustomElement;
   };
-}(this.window || global, Array, Object));
+}((this && this.window) || global, Array, Object));
