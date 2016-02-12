@@ -136,6 +136,7 @@ var DOMClass = (function (g, A, O) {'use strict';
           style.appendChild(document.createTextNode(css));
         }
       } catch(deprecated) {
+        console.error('DAMN IT');
         style = document.createElement('link');
         style.href  = source;
         style.rel   = 'stylesheet';
