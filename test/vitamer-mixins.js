@@ -431,5 +431,19 @@ wru.test([
         if (window.console) console.log(e.detail);
       });
     }
+  }, {
+    name: 'stylesheet attribute',
+    test: function () {
+      if (window.__PHANTOMJS__) return;
+      var StyleSheet = DOMClass({
+        name: 'runtime-style-sheet',
+        stylesheet: '/test/runtime-style-sheet.css',
+        template: 'Hello lazy blocking runtime style!'
+      });
+      var el = document.body.appendChild(new StyleSheet);
+      wru.assert('it should have 6px as margin-left',
+        getComputedStyle(el, null).getPropertyValue('margin-left') === '6px');
+      // document.body.removeChild(el);
+    }
   }
 ]);

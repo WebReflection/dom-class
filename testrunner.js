@@ -1,6 +1,11 @@
 console.log('Loading: test.html');
 var page = require('webpage').create();
 var url = 'index.html';
+page.onInitialized = function () {
+  page.evaluate(function () {
+    window.__PHANTOMJS__ = true;
+  });
+};
 page.open(url, function (status) {
   if (status === 'success') {
     setTimeout(function () {

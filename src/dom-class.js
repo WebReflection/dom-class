@@ -8,10 +8,13 @@ var DOMClass = (function (g, A, O) {'use strict';
     CONSTRUCTOR_CALLBACK = 'createdCallback',
     CSS = 'css',
     STYLE = '<style>',
+    STYLESHEET = 'stylesheet',
     DETACHED = 'onDetached',
     DETACHED_CALLBAK = 'detachedCallback',
     EXTENDS = 'extends',
     NAME = 'name',
+    document = g.document,
+    html = document.documentElement,
     hOP = O.hasOwnProperty,
     empty = A.prototype,
     copyOwn = function (source, target) {
@@ -87,12 +90,72 @@ var DOMClass = (function (g, A, O) {'use strict';
         }
       });
     },
+    loadStyle = function (prefix, source) {
+      var
+        xhr = new XMLHttpRequest(),
+        where = document.body ||
+                document.head ||
+                html,
+        css,
+        style
+      ;
+      try {
+        xhr.open('GET', source, false);
+        xhr.send(null);
+        css = xhr.responseText;
+        style = where.insertBefore(
+          document.createElement('style'),
+          where.lastChild
+        );
+        style.type = 'text/css';
+        if ('styleSheet' in style) {
+          style.styleSheet.cssText = css;
+        } else {
+          style.appendChild(document.createTextNode(css));
+        }
+      } catch(deprecated) {
+        style = document.createElement('link');
+        style.href  = source;
+        style.rel   = 'stylesheet';
+        style.type  = 'text/css';
+        where.insertBefore(style, where.lastChild);
+      }
+      return html.offsetWidth;
+    },
+    // preFix = function (prefix, css) {
+    //   var
+    //     _ = function (selectors) {
+    //       var s = selectors.split(/\s*,\s*/), i = s.length;
+    //       while (i--) s[i] = prefix + ' ' + trim.call(s[i]);
+    //       return s.join(',');
+    //     },
+    //     i = 0,
+    //     length = css.length,
+    //     out = [],
+    //     open, close
+    //   ;
+    //   while (i < length) {
+    //     open = css.indexOf('{', i);
+    //     if (open < 0) break;
+    //     close = css.indexOf('}', open) + 1;
+    //     out.push(_(css.slice(i, open)), css.slice(open, close));
+    //     i = close;
+    //   }
+    //   return out.join('');
+    // },
+    // trim = ''.trim || function () {
+    //   return this.replace(/^\s+|\s+/g, '');
+    // },
     uids = {},
     i = 0
   ;
   return function DOMClass(description) {
     var
       CustomElement = function CustomElement() {
+        if (hasStyleSheet) {
+          hasStyleSheet = false;
+          loadStyle(key, styleSheet);
+        }
         args = slice.apply(0, arguments);
         return new Element();
       },
@@ -100,6 +163,8 @@ var DOMClass = (function (g, A, O) {'use strict';
       el = {},
       css = hOP.call(description, CSS),
       init = hOP.call(description, CONSTRUCTOR),
+      hasStyleSheet = hOP.call(description, STYLESHEET),
+      styleSheet = hasStyleSheet && description[STYLESHEET],
       createdCallback = init && description[CONSTRUCTOR],
       Element,
       constructor,
@@ -118,6 +183,7 @@ var DOMClass = (function (g, A, O) {'use strict';
           case EXTENDS:
           case NAME:
           case CSS:
+          case STYLESHEET:
             break;
           default:
             el[key] = description[key];
