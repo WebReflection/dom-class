@@ -437,7 +437,7 @@ wru.test([
       if (window.__PHANTOMJS__) return;
       var StyleSheet = DOMClass({
         name: 'runtime-style-sheet',
-        stylesheet: '/test/runtime-style-sheet.css',
+        stylesheet: 'test/runtime-style-sheet.css',
         template: 'Hello lazy blocking runtime style!'
       });
       var el = document.body.appendChild(new StyleSheet);
