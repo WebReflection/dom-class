@@ -8,8 +8,6 @@
   <link rel="stylesheet" href="bootstrap.min.css">
   <link rel="stylesheet" href="dbmonster.style.css">
   <script src="vitamer-mixins.js"></script>
-  <script src="db-monster.js"></script>
-  <script src="data.js"></script>
 </head>
 <body>
 <div id="link">
@@ -17,18 +15,25 @@
   version of <a href="https://dbmonster.firebaseapp.com/">DBMonster</a>.
   Compare with <a href="http://webreflection.github.io/dbmonster/">pure DOM</a>.
 </div>
-<div id="body"></div>
+<div>
+  <div id="app"></div>
+</div>
+<script src="db-monster.js"></script>
+<script src="libs/ENV.js"></script>
+<script src="libs/memory-stats.js"></script>
+<script src="libs/monitor.js"></script>
 <script>
-this.onload = function () {
-  this.dbm = document.query('#body').appendChild(
-    new DBMonster(getData())
+  var dbm = document.getElementById('app').appendChild(
+      new DBMonster(ENV.generateData(false).toArray())
   );
+
   // ... and update its content ASAP
-  requestAnimationFrame(function update() {
-    dbm.update(getData());
-    requestAnimationFrame(update);
-  });
-};
+  function render() {
+    Monitoring.renderRate.ping();
+    dbm.update(ENV.generateData(false).toArray());
+    setTimeout(render, ENV.timeout);
+  }
+  render();
 </script>
 </body>
 </html>

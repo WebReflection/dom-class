@@ -16,29 +16,24 @@ var DBMonster = DOMClass({
           template: ''.concat(
             '<td class="dbname">{{name}}</td>',
             '<td class="query-count">',
-              '<span data-bind="class:getCountClassName(count)">{{count}}</span>',
+              '<span data-bind="class:countClassName">{{queries}}</span>',
             '</td>'
           ),
           bindings: {
-            db: db,
-            name: db.name,
-            count: db.queries.length,
-            getCountClassName: function () {
-              return getCountClassName(this.db);
-            }
+            name: db.dbname,
+            queries: db.lastSample.nbQueries,
+            countClassName: db.lastSample.countClassName
           }
         });
-        this.setAttribute('key', db.name);
-        this.queryResults = db.topFiveQueries.map(function (query) {
+        this.queryResults = db.lastSample.topFiveQueries.map(function (query) {
           return this.appendChild(new DBMonster.QueryResult(query));
         }, this);
       },
       update: function (db) {
-        this.bindings.db = db;
-        this.bindings.name = db.name;
-        this.bindings.count = db.queries.length;
-        this.setAttribute('key', db.name);
-        this.queryResults.forEach(this.subUpdate, db.topFiveQueries);
+        this.bindings.name = db.dbname;
+        this.bindings.queries = db.lastSample.nbQueries;
+        this.bindings.countClassName =  db.lastSample.countClassName;
+        this.queryResults.forEach(this.subUpdate, db.lastSample.topFiveQueries);
       },
       subUpdate: function (qr, i) {
         qr.update(this[i]);
@@ -53,24 +48,23 @@ var DBMonster = DOMClass({
       constructor: function (query) {
         this.createBindings({
           template: ''.concat(
-            '<span class="foo">{{formatElapsed(elapsed)}}</span>',
+            '<span class="foo">{{formatElapsed}}</span>',
             '<div class="popover left">',
               '<div class="popover-content">{{query}}</div>',
               '<div class="arrow"></div>',
             '</div>'
           ),
           bindings: {
-            elapsed: query.elapsed,
             query: query.query,
-            formatElapsed: formatElapsed
+            formatElapsed: query.formatElapsed
           }
         });
-        this.className = elapsedClassName(query.elapsed);
+        this.className = query.elapsedClassName;
       },
       update: function (query) {
         this.bindings.query = query.query;
-        this.bindings.elapsed = query.elapsed;
-        this.className = elapsedClassName(query.elapsed);
+        this.bindings.formatElapsed = query.formatElapsed;
+        this.className = query.elapsedClassName;
       }
     })
   },
