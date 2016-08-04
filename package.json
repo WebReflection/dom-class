@@ -33,7 +33,7 @@
     "jshint": "2",
     "browserify": "*",
     "watchify": "*",
-    "phantomjs": "*",
+    "phantomjs-prebuilt": "*",
     "tiny-cdn": "*"
   },
   "devDependencies": {
