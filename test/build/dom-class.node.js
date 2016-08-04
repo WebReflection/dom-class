@@ -194,7 +194,7 @@ var DOMClass = (function (g, A, O) {'use strict';
       createdCallback = init && description[CONSTRUCTOR],
       Element,
       constructor,
-      key, proto, nodeName
+      key, proto, cssName, nodeName
     ;
     setIfThere(description, ATTACHED, el, ATTACHED_CALLBACK);
     setIfThere(description, CHANGED, el, CHANGED_CALLBACK);
@@ -277,13 +277,17 @@ var DOMClass = (function (g, A, O) {'use strict';
         // GZIP ALL THE THINGS!
       }
     }
-    key = hOP.call(description, NAME) ? description[NAME] : ('x-dom-class-' + i++);
-    if (css) el[STYLE] = restyle(key, description[CSS]);
+    key = hOP.call(description, NAME) ?
+      description[NAME] : ('x-dom-class-' + i++);
+    if (css) {
+      cssName = nodeName ? (nodeName + '[is="' + key + '"]') : key;
+      el[STYLE] = restyle(cssName, description[CSS]);
+    }
     el[CONSTRUCTOR_CALLBACK] = function () {
       var a = grantArguments(this, args);
       args = empty;
       constructor.apply(this, a);
-      if (css) lazyStyle(this, key, uid(key));
+      if (css) lazyStyle(this, cssName, uid(key));
       if (init) createdCallback.apply(this, a);
     };
     constructor = new Class(el);

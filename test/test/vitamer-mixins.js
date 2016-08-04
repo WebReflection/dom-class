@@ -445,5 +445,24 @@ wru.test([
         getComputedStyle(el, null).getPropertyValue('margin-left') === '6px');
       // document.body.removeChild(el);
     }
+  }, {
+    name: 'styling using extends',
+    test: function () {
+      var XButton = new DOMClass({
+        extends: HTMLButtonElement,
+        name: 'x-button',
+        css: {
+          '': {
+            border: '4px solid black'
+          }
+        }
+      });
+      var xb = document.body.appendChild(new XButton);
+      setTimeout(wru.async(function () {
+        wru.assert('it should have 4px border',
+          getComputedStyle(xb, null).getPropertyValue('border-width') === '4px');
+        document.body.removeChild(xb);
+      }), 200);
+    }
   }
 ]);
